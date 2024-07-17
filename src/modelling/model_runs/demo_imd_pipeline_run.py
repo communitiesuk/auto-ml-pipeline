@@ -14,7 +14,7 @@ from xgboost import XGBRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
 
-from src.modelling.ml_pipeline import preprocess_features, preprocess_target, model_grid_cv_pipeline
+from src.modelling.pipeline.ml_pipeline import preprocess_features, preprocess_target, model_grid_cv_pipeline
 
 
 # demonstration model run using LDC data to predict IMD score at LSOA level
