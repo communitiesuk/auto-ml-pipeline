@@ -1,6 +1,6 @@
 # Predictive modelling pipeline guidance
 
-We have created a multi-stage modelling pipeline which can be applied to any regression or classificaiton machine learning problem. The following guidance explains how to run the pipeline using your own data.
+We have created a multi-stage modelling pipeline which can be applied to any regression machine learning problem. The following guidance explains how to run the pipeline using your own data.
 
 The pipeline is implemented using the scikit-learn library.
 
