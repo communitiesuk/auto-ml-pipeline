@@ -133,11 +133,11 @@ def evaluate_model(full_pipeline: object, best_model: object, x_train: pd.DataFr
 
 
 def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluation_model: str, final_model: str, full_pipeline: object, 
-                                        model_name: str, best_params: dict, target_var: str, target_df: pd.DataFrame, 
+                                        model_name: str, best_params: dict, target_var: str, target_df: pd.DataFrame, id_col: str, original_df: pd.DataFrame,
                                         x_train: pd.DataFrame, y_train: np.ndarray, x_test: pd.DataFrame, y_test: np.ndarray, 
                                         train_predictions: np.ndarray, test_predictions: np.ndarray, train_rmse: float, train_rmse_sd: float, 
                                         test_rmse: float, train_r2: float, train_r2_sd: float, test_r2: float, 
-                                        output_label: str = "", output_path: str = "", col_label_map: dict={}, pd_y_label: str = "") -> None:
+                                        output_label: str = "", output_path: str = "",col_label_map: dict={}, pd_y_label: str = "", shap_plots: bool=False, shap_id_keys: list=[]) -> None:
     """
     Output evaluation metrics and create plots for the regression model.
 
@@ -152,6 +152,8 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
     - best_params (dict): Best hyperparameters found during GridSearchCV.
     - target_var (str): Name of the target variable.
     - target_df (pd.DataFrame): DataFrame containing the target variable.
+    - id_col (str): Name of the unique id variable for each row in the dataset.
+    - original_df (str): Original full feature and target df with id col.
     - x_train (pd.DataFrame): Training input data.
     - y_train (pd.DataFrame): Training target data.
     - x_test (np.ndarray): Test input data.
@@ -168,10 +170,12 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots.
     - pd_y_label (str, optional): A label the y axis of the PD plots.
+    - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
+    - shap_id_keys (list, optional): List for rows to create shap plots for.
 
     Returns: None
     """
-    #create an empty csv for the results
+   #create an empty csv for the results
     filename = f"{output_path}/{output_label}_regression_model_summary.csv"
     if os.path.isfile(filename):
         all_models_evaluation_df = pd.read_csv(filename)
@@ -200,7 +204,7 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
     feature_importance_model = full_pipeline.best_estimator_.named_steps["model"]
     if model_name == user_evaluation_model:
         print("Creating evaluation plots")
-        create_model_evaluation_plots(full_pipeline, feature_importance_model, target_var, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, col_label_map, pd_y_label)
+        create_model_evaluation_plots(full_pipeline, feature_importance_model, target_var, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys)
     # if no user defined model then create plots for best performing model
     elif user_evaluation_model == "":
         if model_name == final_model:
@@ -209,13 +213,15 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
             test_predictions = best_evaluation_model.predict(x_test)
             print("The best performing model is: " + str(best_model))
             print("Creating evaluation plots")
-            create_model_evaluation_plots(best_evaluation_model, best_model, target_var, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label)
+            create_model_evaluation_plots(best_evaluation_model, best_model, target_var, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys)
     return
 
 
-def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: pd.DataFrame,  
-                           x_train: pd.DataFrame, y_train: np.ndarray, x_test: pd.DataFrame, y_test: np.ndarray, 
-                           output_label: str = "", output_path: str = "", col_label_map: dict={}, pd_y_label: str = "", user_evaluation_model: str="") -> None:
+def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: pd.DataFrame, 
+                           id_col: str, original_df: pd.DataFrame, x_train: pd.DataFrame, y_train: np.ndarray, 
+                           x_test: pd.DataFrame, y_test: np.ndarray, output_label: str = "", output_path: str = "",
+                           col_label_map: dict={}, pd_y_label: str = "", user_evaluation_model: str="", 
+                           shap_plots: bool=False, shap_id_keys: list=[]) -> None:
     """
     Perform a grid search cross-validation for multiple regression models.
 
@@ -223,6 +229,8 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
     - model_param_dict (dict): Dictionary containing regression models and their hyperparameter grids.
     - target_var (str): Name of the target variable.
     - target_df (str): Original target df.
+    - id_col (str): Name of the unique id variable for each row in the dataset.
+    - original_df (str): Original full feature and target df with id col.
     - x_train (pd.DataFrame): Training input data.
     - y_train (np.ndarray): Training target data.
     - x_test (pd.DataFrame): Test input data.
@@ -233,12 +241,14 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
     - pd_y_label (str, optional): A label the y axis of the PD plots.
     - user_evaluation_model (str, optional): User defined model to use when creating evaluation plots. 
       If not defined, evaluation plots will be created for the best performing model.
+    - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
+    - shap_id_keys (list, optional): List for rows to create shap plots for.
 
     Returns: None
     """
 
     # initialise evaluation metric checker to track best performing model
-    best_r2 = -1
+    best_r2 = -100
     # final model name to trigger evaluation chart plotting
     final_model = str(list(model_param_dict.keys())[-1]).split("(")[0]
 
@@ -282,6 +292,5 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
             # now just input into eval metrics function
 
         # output model results
-        output_evaluation_metrics_and_plots(user_evaluation_model, best_evaluation_model, final_model, full_pipeline, model_name, best_params, target_var, target_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, output_label, output_path, col_label_map, pd_y_label)
+        output_evaluation_metrics_and_plots(user_evaluation_model, best_evaluation_model, final_model, full_pipeline, model_name, best_params, target_var, target_df, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys)
     return 
-
