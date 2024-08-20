@@ -7,6 +7,7 @@ import sys
 sys.path.append(repo.working_tree_dir)
 
 from typing import Any, Tuple
+import shap
 import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
@@ -346,9 +347,59 @@ def create_tree_plot(model: Any, x_train: pd.DataFrame, target_var: str, output_
     return
 
 
-def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: str, x_train: pd.DataFrame, y_train: pd.Series, 
-                                  x_test: pd.DataFrame, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
-                                  output_path: str , output_label: str = "", col_labels: dict = {}, pd_y_label: str = "") -> None:
+def create_shap_plots(id_col: str, original_df: pd.DataFrame, 
+                      x_test: pd.DataFrame, x_train: pd.DataFrame,
+                      full_pipeline: any, target_var: str, shap_id_keys: list[str],
+                      output_path: str, output_label: str = "") -> None:
+    """
+    Creates SHAP force plots for specified IDs.
+
+    Args:
+        id_col: The column name containing the unique IDs.
+        original_df: The original dataframe containing all data.
+        x_test: The test dataset.
+        x_train: The training dataset.
+        full_pipeline: The fitted pipeline used for preprocessing and modeling.
+        target_var: The target variable for the model.
+        shap_id_keys: A list of IDs for which to create SHAP plots.
+        output_path (str): A path to the directory where the output files will be saved.
+        output_label (str, optional): Label to prepend to the output filename. Defaults to "".
+
+    Returns:
+        None
+    """
+    # init for plotting
+    shap.initjs()
+    model = full_pipeline.best_estimator_.named_steps['model']
+    if hasattr(model, 'estimators_'):
+        explainer = shap.TreeExplainer(model)
+    else: 
+        print("shap plots not available for non-tree based models")
+        return
+    for id in shap_id_keys:
+        # get index for each id shap_id_keys
+        row_index = original_df.index.get_loc(original_df[original_df[id_col] == id].index[0])
+        # use pipeline without model step to transform test data
+        try:
+            row_data = x_test.loc[[row_index]]
+            x_transformed = full_pipeline.best_estimator_[:-1].transform(x_test.loc[[row_index]])
+        except(KeyError):
+            print(f"warning, id: {id} is in training set rather than test set")
+            row_data = x_train.loc[[row_index]]
+            x_transformed = full_pipeline.best_estimator_[:-1].transform(x_train.loc[[row_index]])
+        # get shap value
+        shap_values = explainer.shap_values(x_transformed)
+        # create plot
+        shap.force_plot(explainer.expected_value, shap_values[0], row_data, 
+                        show=False, matplotlib=True, text_rotation=45, contribution_threshold=0.035).savefig(f'{output_path}/{output_label}_shap_plot_{target_var}_{id}.png', bbox_inches='tight', dpi=300)
+    return 
+
+
+def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: str, id_col: str, original_df: pd.DataFrame,
+                                  x_train: pd.DataFrame, y_train: pd.Series, x_test: pd.DataFrame, y_test: pd.Series, 
+                                  train_predictions: pd.Series, test_predictions: pd.Series, 
+                                  output_path: str ,output_label: str = "", col_labels: dict = {}, pd_y_label: str = "", 
+                                  shap_plots: bool=False, shap_id_keys: list=[]) -> None:
     """
     Generates multiple plots for model evaluation including feature importance, actual vs. predicted, residuals, and partial dependence plots.
 
@@ -356,6 +407,8 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
         full_pipeline (Any): The full preprocessing and modeling pipeline.
         model (Any): The trained machine learning model.
         target_var (str): The target variable name.
+        id_col (str): Name of the unique id variable for each row in the dataset.
+        target_df (str): Original full feature and target df with id col.
         x_train (pd.DataFrame): Training features.
         y_train (pd.Series): Training target.
         x_test (pd.DataFrame): Test features.
@@ -366,6 +419,8 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
         col_labels (dict, optional): Column labels for the features. Defaults to empty dict.
         pd_y_label (str, optional): Y-axis label for partial dependence plots. Defaults to "".
+        shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
+        shap_id_keys (list, optional): List for rows to create shap plots for.
 
     Returns:
         None
@@ -375,5 +430,7 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
     create_actual_vs_predicted_scatter(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
     create_residuals_plot(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
     create_partial_dependence_plots(full_pipeline, x_train, target_var, output_label, output_path, col_labels, pd_y_label, feature_diff_dict)
-    return  
+    if shap_plots:
+        create_shap_plots(id_col, original_df, x_test, x_train, full_pipeline, target_var, shap_id_keys, output_label, output_path) 
+    return   
 
