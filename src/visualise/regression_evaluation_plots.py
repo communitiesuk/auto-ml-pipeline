@@ -350,7 +350,7 @@ def create_tree_plot(model: Any, x_train: pd.DataFrame, target_var: str, output_
 def create_shap_plots(id_col: str, original_df: pd.DataFrame, 
                       x_test: pd.DataFrame, x_train: pd.DataFrame,
                       full_pipeline: any, target_var: str, shap_id_keys: list[str],
-                      output_path: str, output_label: str = "") -> None:
+                      output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
     """
     Creates SHAP force plots for specified IDs.
 
@@ -364,6 +364,7 @@ def create_shap_plots(id_col: str, original_df: pd.DataFrame,
         shap_id_keys: A list of IDs for which to create SHAP plots.
         output_path (str): A path to the directory where the output files will be saved.
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
+        index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
     Returns:
         None
@@ -378,20 +379,31 @@ def create_shap_plots(id_col: str, original_df: pd.DataFrame,
         return
     for id in shap_id_keys:
         # get index for each id shap_id_keys
-        row_index = original_df.index.get_loc(original_df[original_df[id_col] == id].index[0])
-        # use pipeline without model step to transform test data
         try:
-            row_data = x_test.loc[[row_index]]
-            x_transformed = full_pipeline.best_estimator_[:-1].transform(x_test.loc[[row_index]])
-        except(KeyError):
-            print(f"warning, id: {id} is in training set rather than test set")
-            row_data = x_train.loc[[row_index]]
-            x_transformed = full_pipeline.best_estimator_[:-1].transform(x_train.loc[[row_index]])
-        # get shap value
-        shap_values = explainer.shap_values(x_transformed)
-        # create plot
-        shap.force_plot(explainer.expected_value, shap_values[0], row_data, 
-                        show=False, matplotlib=True, text_rotation=45, contribution_threshold=0.035).savefig(f'{output_path}/{output_label}_shap_plot_{target_var}_{id}.png', bbox_inches='tight', dpi=300)
+            original_index = original_df[original_df[id_col] == id].index[0]
+        except IndexError:
+            print(f"ID not found in original data: {id}")
+            continue
+        
+        # Check if the index is in x_train or x_test using the mapping
+        if original_index in index_mapping:
+            dataset_type, row_pos = index_mapping[original_index]
+
+            if dataset_type == 'train':
+                row_data = x_train.iloc[[row_pos]]
+                x_transformed = full_pipeline.best_estimator_[:-1].transform(row_data)
+            else:  # 'test'
+                row_data = x_test.iloc[[row_pos]]
+                x_transformed = full_pipeline.best_estimator_[:-1].transform(row_data)
+            # get shap value
+            shap_values = explainer.shap_values(x_transformed)
+            # create plot
+            shap.force_plot(explainer.expected_value, shap_values[0], row_data, 
+                            show=False, matplotlib=True, text_rotation=45, contribution_threshold=0.035).savefig(
+                            f'{output_path}/{output_label}_shap_plot_{target_var}_{id}.png',
+                            bbox_inches='tight', dpi=300)
+        else:
+            print(f"Index for ID {id} not found in training or test data")
     return 
 
 
@@ -399,7 +411,7 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
                                   x_train: pd.DataFrame, y_train: pd.Series, x_test: pd.DataFrame, y_test: pd.Series, 
                                   train_predictions: pd.Series, test_predictions: pd.Series, 
                                   output_path: str ,output_label: str = "", col_labels: dict = {}, pd_y_label: str = "", 
-                                  shap_plots: bool=False, shap_id_keys: list=[]) -> None:
+                                  shap_plots: bool=False, shap_id_keys: list=[], index_mapping: dict={}) -> None:
     """
     Generates multiple plots for model evaluation including feature importance, actual vs. predicted, residuals, and partial dependence plots.
 
@@ -421,6 +433,7 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
         pd_y_label (str, optional): Y-axis label for partial dependence plots. Defaults to "".
         shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
         shap_id_keys (list, optional): List for rows to create shap plots for.
+        index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
     Returns:
         None
@@ -431,6 +444,6 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
     create_residuals_plot(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
     create_partial_dependence_plots(full_pipeline, x_train, target_var, output_label, output_path, col_labels, pd_y_label, feature_diff_dict)
     if shap_plots:
-        create_shap_plots(id_col, original_df, x_test, x_train, full_pipeline, target_var, shap_id_keys, output_label, output_path) 
+        create_shap_plots(id_col, original_df, x_test, x_train, full_pipeline, target_var, shap_id_keys, output_label, output_path, index_mapping) 
     return   
 

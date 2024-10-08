@@ -137,7 +137,8 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
                                         x_train: pd.DataFrame, y_train: np.ndarray, x_test: pd.DataFrame, y_test: np.ndarray, 
                                         train_predictions: np.ndarray, test_predictions: np.ndarray, train_rmse: float, train_rmse_sd: float, 
                                         test_rmse: float, train_r2: float, train_r2_sd: float, test_r2: float, 
-                                        output_label: str = "", output_path: str = "",col_label_map: dict={}, pd_y_label: str = "", shap_plots: bool=False, shap_id_keys: list=[]) -> None:
+                                        output_label: str = "", output_path: str = "",col_label_map: dict={}, pd_y_label: str = "", 
+                                        shap_plots: bool=False, shap_id_keys: list=[], index_mapping: dict={}) -> None:
     """
     Output evaluation metrics and create plots for the regression model.
 
@@ -172,6 +173,7 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
     - pd_y_label (str, optional): A label the y axis of the PD plots.
     - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
+    - index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
     Returns: None
     """
@@ -204,7 +206,7 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
     feature_importance_model = full_pipeline.best_estimator_.named_steps["model"]
     if model_name == user_evaluation_model:
         print("Creating evaluation plots")
-        create_model_evaluation_plots(full_pipeline, feature_importance_model, target_var, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys)
+        create_model_evaluation_plots(full_pipeline, feature_importance_model, target_var, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
     # if no user defined model then create plots for best performing model
     elif user_evaluation_model == "":
         if model_name == final_model:
@@ -213,7 +215,7 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
             test_predictions = best_evaluation_model.predict(x_test)
             print("The best performing model is: " + str(best_model))
             print("Creating evaluation plots")
-            create_model_evaluation_plots(best_evaluation_model, best_model, target_var, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys)
+            create_model_evaluation_plots(best_evaluation_model, best_model, target_var, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
     return
 
 
@@ -251,6 +253,19 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
     best_r2 = -100
     # final model name to trigger evaluation chart plotting
     final_model = str(list(model_param_dict.keys())[-1]).split("(")[0]
+
+    # Create a mapping dictionary for Shap plots: original_df index -> (x_train or x_test, index)
+    # Get the indices for the train and test sets
+    train_indices = x_train.index
+    test_indices = x_test.index
+    index_mapping = {}
+    # Fill the mapping for train indices
+    for idx in train_indices:
+        index_mapping[idx] = ('train', train_indices.get_loc(idx))
+
+    # Fill the mapping for test indices
+    for idx in test_indices:
+        index_mapping[idx] = ('test', test_indices.get_loc(idx))
 
     for model in model_param_dict.keys():
         model_name = str(model).split("(")[0]
@@ -292,5 +307,5 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
             # now just input into eval metrics function
 
         # output model results
-        output_evaluation_metrics_and_plots(user_evaluation_model, best_evaluation_model, final_model, full_pipeline, model_name, best_params, target_var, target_df, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys)
+        output_evaluation_metrics_and_plots(user_evaluation_model, best_evaluation_model, final_model, full_pipeline, model_name, best_params, target_var, target_df, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
     return 
