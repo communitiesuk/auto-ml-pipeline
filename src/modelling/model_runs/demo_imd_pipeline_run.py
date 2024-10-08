@@ -30,7 +30,6 @@ ldc_density_metrics = pd.merge(left=ldc_density_metrics, right=imd_data, left_on
 ldc_density_metrics = ldc_density_metrics.dropna()
 # take sample to speed up run time
 ldc_density_metrics = ldc_density_metrics.head(1000)
-print(ldc_density_metrics)
 
 # drop any unecessary variables to  from model
 drop_variables = []
