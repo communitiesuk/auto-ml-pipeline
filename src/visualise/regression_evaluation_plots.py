@@ -372,11 +372,13 @@ def create_shap_plots(id_col: str, original_df: pd.DataFrame,
     # init for plotting
     shap.initjs()
     model = full_pipeline.best_estimator_.named_steps['model']
-    if hasattr(model, 'estimators_'):
+    try:
         explainer = shap.TreeExplainer(model)
-    else: 
-        print("shap plots not available for non-tree based models")
-        return
+        return explainer
+    except Exception as e:
+        print(f"SHAP plots not available for non-tree based models. Error: {e}")
+        return None
+    
     for id in shap_id_keys:
         # get index for each id shap_id_keys
         try:
