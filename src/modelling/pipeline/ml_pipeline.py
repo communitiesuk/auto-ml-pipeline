@@ -1,3 +1,5 @@
+
+from typing import Any
 import git
 import os
 import pickle
@@ -10,6 +12,8 @@ sys.path.append(repo.working_tree_dir)
 
 import pandas as pd
 import numpy as np
+import mlflow
+import mlflow.sklearn
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.svm import SVR 
@@ -218,6 +222,43 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
             create_model_evaluation_plots(best_evaluation_model, best_model, target_var, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
     return
 
+def log_gridsearch_results_to_mlflow(grid_search: object, model_name: str, output_label: str="") -> None:
+    """
+    Log all GridSearchCV results and hyperparameters to MLflow.
+    
+    Parameters:
+    - grid_search (object): The GridSearchCV object after it has been fitted.
+    - model_name (str): A name to identify the model in the MLflow logs.
+    - output_label (str): A label to add to the output files saved.
+    """
+    # set experiment id as output label if present, default experiment if not
+    if output_label:
+        mlflow.set_experiment(output_label)
+    # Loop through the results for each parameter combination
+    # End any existing runs
+    mlflow.end_run()
+    run_name = output_label + model_name
+    with mlflow.start_run(run_name=run_name) as parent_run:
+        # log the model name
+        mlflow.set_tag("model_name", model_name)
+        for i in range(len(grid_search.cv_results_['params'])):
+            with mlflow.start_run(run_name="hyper_parmam_" + run_name, nested=True):
+                # Log the hyperparameters
+                params = grid_search.cv_results_['params'][i]
+                mlflow.log_params(params)
+
+                # Log the metrics for this parameter combination
+                mean_train_rmse = -grid_search.cv_results_['mean_train_neg_root_mean_squared_error'][i]
+                mean_test_rmse = -grid_search.cv_results_['mean_test_neg_root_mean_squared_error'][i]
+                mean_train_r2 = grid_search.cv_results_['mean_train_r2'][i]
+                mean_test_r2 = grid_search.cv_results_['mean_test_r2'][i]
+
+                mlflow.log_metric("train_rmse", mean_train_rmse)
+                mlflow.log_metric("test_rmse", mean_test_rmse)
+                mlflow.log_metric("train_r2", mean_train_r2)
+                mlflow.log_metric("test_r2", mean_test_r2)
+    return
+
 
 def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: pd.DataFrame, 
                            id_col: str, original_df: pd.DataFrame, x_train: pd.DataFrame, y_train: np.ndarray, 
@@ -299,6 +340,9 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
 
         # evaluate model
         train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, train_predictions, test_predictions = evaluate_model(full_pipeline, best_model, x_train, y_train, x_test, y_test)
+        
+        # model parameters and metrics to MLflow
+        log_gridsearch_results_to_mlflow(full_pipeline, model_name, output_label)
 
         # keep track of best performing model in terms of r2 for eval plots
         if test_r2 > best_r2:
