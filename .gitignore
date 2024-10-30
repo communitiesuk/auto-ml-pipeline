@@ -1,3 +1,4 @@
+*mlruns/
 *.csv
 *.xlsx
 *.xlsm
