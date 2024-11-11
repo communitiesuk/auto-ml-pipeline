@@ -233,12 +233,8 @@ def log_gridsearch_results_to_mlflow(model_name: str, output_label: str="") -> N
     # set experiment id as output label if present, default experiment if not
     if output_label:
         mlflow.set_experiment(output_label)
-    mlflow.sklearn.autolog(log_input_examples=True, max_tuning_runs=10, log_post_training_metrics=False,  extra_tags={"model_name": model_name},
-)
-    with mlflow.start_run(run_name=output_label + model_name) as run:
-        # log the model name
-        mlflow.set_tag("model_name", model_name)
-        # autolog params and metrics
+    # autolog hyperparams and eval metrics
+    mlflow.sklearn.autolog(log_input_examples=True, max_tuning_runs=10, log_post_training_metrics=False,  extra_tags={"model_name": model_name})
     return
 
 
@@ -300,18 +296,18 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
                 ('selector', VarianceThreshold()),
                 ('model', model)
             ])
-
-        # model parameters and metrics to MLflow
+        # log model parameters and metrics to MLflow
         log_gridsearch_results_to_mlflow(model_name, output_label)
 
-        # defining optimisation criteria here, this could be user defined in future.
-        full_pipeline = GridSearchCV(processing_pipeline, model_param_dict[model], cv=5,
-                            scoring=['neg_root_mean_squared_error', 'r2'],
-                            refit='r2',
-                            return_train_score=True,
-                            verbose=2)
+        with mlflow.start_run(run_name=output_label + "_" + model_name) as run:
+            # defining optimisation criteria here, this could be user defined in future.
+            full_pipeline = GridSearchCV(processing_pipeline, model_param_dict[model], cv=5,
+                                scoring=['neg_root_mean_squared_error', 'r2'],
+                                refit='r2',
+                                return_train_score=True,
+                                verbose=2)
 
-        full_pipeline.fit(x_train, y_train)
+            full_pipeline.fit(x_train, y_train)
 
         # best model from cv search
         best_params = full_pipeline.best_params_
