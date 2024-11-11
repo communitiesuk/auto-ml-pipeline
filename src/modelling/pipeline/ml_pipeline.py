@@ -233,7 +233,8 @@ def log_gridsearch_results_to_mlflow(model_name: str, output_label: str="") -> N
     # set experiment id as output label if present, default experiment if not
     if output_label:
         mlflow.set_experiment(output_label)
-    mlflow.sklearn.autolog(log_input_examples=True, max_tuning_runs=10, log_post_training_metrics=False)
+    mlflow.sklearn.autolog(log_input_examples=True, max_tuning_runs=10, log_post_training_metrics=False,  extra_tags={"model_name": model_name},
+)
     with mlflow.start_run(run_name=output_label + model_name) as run:
         # log the model name
         mlflow.set_tag("model_name", model_name)
