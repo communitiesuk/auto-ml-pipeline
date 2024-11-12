@@ -15,18 +15,11 @@ import numpy as np
 import mlflow
 import mlflow.sklearn
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.linear_model import LinearRegression, Lasso
-from sklearn.svm import SVR 
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
-from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, RobustScaler, PowerTransformer
+from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold # Feature selector
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import cross_val_score, train_test_split, GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
 
@@ -72,7 +65,7 @@ def preprocess_features(df: pd.DataFrame, cols_to_drop: list=None, encode_catego
 
 
 class FilterFeatures(BaseEstimator, TransformerMixin):
-    def __init__(self, filter_features=True, feature_filter_list=None): #
+    def __init__(self, filter_features=False, feature_filter_list=None): #
         self.filter_features = filter_features
         self.feature_filter_list = feature_filter_list
     def fit(self, x, y=None):
@@ -188,7 +181,10 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
     else:
         all_models_evaluation_df = pd.DataFrame()
     # remove feature list hyperparameter from output 
-    del best_params['feature_filter__feature_filter_list']
+    try:
+        del best_params['feature_filter__feature_filter_list']
+    except KeyError:
+        pass
         
     model_evaluation_dict = {"time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
                             "model": model_name,
@@ -234,7 +230,7 @@ def log_gridsearch_results_to_mlflow(model_name: str, output_label: str="") -> N
     if output_label:
         mlflow.set_experiment(output_label)
     # autolog hyperparams and eval metrics
-    mlflow.sklearn.autolog(log_input_examples=True, max_tuning_runs=10, log_post_training_metrics=False,  extra_tags={"model_name": model_name})
+    mlflow.sklearn.autolog(log_input_examples=True, max_tuning_runs=50, log_post_training_metrics=False,  extra_tags={"model_name": model_name})
     return
 
 

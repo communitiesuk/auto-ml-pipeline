@@ -58,9 +58,7 @@ model_param_dict = {
             'model__max_features': [1, 0.5, 'sqrt'],
             'model__min_samples_leaf':  [1, 4, 10],
             'model__min_samples_split': [2, 5, 10],
-            'model__n_estimators': [10, 50, 200],
-            'feature_filter__filter_features': [False],
-            'feature_filter__feature_filter_list': [select_features_list]
+            'model__n_estimators': [10, 50, 200]
             },
         # XGBRegressor():{
         #     'model__max_depth': [2, 3, 5, 10],
