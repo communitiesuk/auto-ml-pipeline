@@ -38,21 +38,20 @@ geography_variables=['lsoa11cd', 'LSOA code (2011)']
 # target variables
 target_var_list = ["Index of Multiple Deprivation (IMD) Score"]
 
-# select features list - use to subset specific features of interest, if blank it will use all features. Change feature_filter__filter_features hyperparm when usings
+# select features list - use to subset specific features of interest, if blank it will use all features. 
+# Change feature_filter__filter_features hyperparm when usings, see linear regression model param dictionary for implementation
 select_features_list = []
 
 # model dictionary and hyperparameter search space
 model_param_dict = { 
-        # LinearRegression(): {
-        #     'feature_filter__filter_features':  [False],
-        #     'feature_filter__feature_filter_list': [select_features_list]
-        #     },
-        # Lasso(): {
-        #     'model__fit_intercept': [True, False],
-        #     'model__alpha': [0.001, 0.01, 0.1, 0.5, 1],
-        #     'feature_filter__filter_features': [False],
-        #     'feature_filter__feature_filter_list': [select_features_list]
-        #     },
+        LinearRegression(): {
+            'feature_filter__filter_features':  [False],
+            'feature_filter__feature_filter_list': [select_features_list]
+            },
+        Lasso(): {
+            'model__fit_intercept': [True, False],
+            'model__alpha': [0.001, 0.01, 0.1, 0.5, 1],
+            },
         RandomForestRegressor(): {
             'model__max_depth': [None, 25, 50],
             'model__max_features': [1, 0.5, 'sqrt'],
@@ -60,14 +59,14 @@ model_param_dict = {
             'model__min_samples_split': [2, 5, 10],
             'model__n_estimators': [10, 50, 200]
             },
-        # XGBRegressor():{
-        #     'model__max_depth': [2, 3, 5, 10],
-        #     'model__learning_rate': [0.1, 0.01, 0.001],
-        #     'model__subsample': [0.5, 0.7, 1],
-        #     'model__n_estimators':[10, 50, 100, 500, 2000],
-        #     'feature_filter__filter_features': [False],
-        #     'feature_filter__feature_filter_list': [select_features_list]
-        #     }
+        XGBRegressor():{
+            'model__max_depth': [2, 3, 5, 10],
+            'model__learning_rate': [0.1, 0.01, 0.001],
+            'model__subsample': [0.5, 0.7, 1],
+            'model__n_estimators':[10, 50, 100, 500, 2000],
+            'feature_filter__filter_features': [False],
+            'feature_filter__feature_filter_list': [select_features_list]
+            }
 }
 
 # optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
