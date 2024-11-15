@@ -126,6 +126,9 @@ def evaluate_model(full_pipeline: object, best_model: object, x_train: pd.DataFr
     test_rmse = np.sqrt(test_mse)
     # test R^2
     test_r2 = r2_score(y_test, test_predictions)
+    # log test performance to MLflow
+    mlflow.log_metric("test_r2", test_r2)
+    mlflow.log_metric("test_rmse", test_rmse)
     return  train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, train_predictions, test_predictions
 
 
@@ -218,6 +221,7 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
             create_model_evaluation_plots(best_evaluation_model, best_model, target_var, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
     return
 
+
 def log_gridsearch_results_to_mlflow(model_name: str, output_label: str="") -> None:
     """
     Log all GridSearchCV results and hyperparameters to MLflow.
@@ -299,26 +303,25 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
             # defining optimisation criteria here, this could be user defined in future.
             full_pipeline = GridSearchCV(processing_pipeline, model_param_dict[model], cv=5,
                                 scoring=['neg_root_mean_squared_error', 'r2'],
-                                refit='r2',
+                                refit='neg_root_mean_squared_error',
                                 return_train_score=True,
                                 verbose=2)
 
             full_pipeline.fit(x_train, y_train)
 
-        # best model from cv search
-        best_params = full_pipeline.best_params_
-        best_model = full_pipeline.best_estimator_
+            # best model from cv search
+            best_params = full_pipeline.best_params_
+            best_model = full_pipeline.best_estimator_
 
-        # save best models
-        pickle.dump(
-            best_model,
-            open(output_path + "/" + output_label + "_" + model_name + "_" + target_var + ".pickle", "wb"),
-        )
+            # save best models
+            pickle.dump(
+                best_model,
+                open(output_path + "/" + output_label + "_" + model_name + "_" + target_var + ".pickle", "wb"),
+            )
 
-        # evaluate model
-        train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, train_predictions, test_predictions = evaluate_model(full_pipeline, best_model, x_train, y_train, x_test, y_test)
-    
-
+            # evaluate model
+            train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, train_predictions, test_predictions = evaluate_model(full_pipeline, best_model, x_train, y_train, x_test, y_test)
+        
         # keep track of best performing model in terms of r2 for eval plots
         if test_r2 > best_r2:
             best_r2 = test_r2
