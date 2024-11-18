@@ -126,6 +126,18 @@ Other diagnostic plots to evaluate model performance.
 
 Use these results to understand the performance of each model and make informed decisions about which model best fits your data and use case.
 
+### Automatic logging with MLflow
+
+The pipeline incorporates MLflow for model performance logging. To access the user interface after running the pipeline, open a terminal, CD to the project directory, and type the following command in the terminal:
+
+```python
+mlflow ui
+```
+
+The model runs will be sorted into experiments based on the specified output_label parameter.
+
+See the [MLflow docs](https://mlflow.org/docs/latest/index.html) for more details.
+
 ### Optional steps: select features and shortened labels for evaluation plots
 
 You can create a list of features to filter the input data as a hyperparameter step which can be used to see if a smaller subset of features improves model performance. 
