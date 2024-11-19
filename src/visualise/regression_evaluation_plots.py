@@ -223,7 +223,17 @@ def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame,
     return
 
 
-def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, target_var: str, output_path: str, output_label: str = "") -> None:
+def add_original_indices_test_train(test, train, original_df, id_col, index_mapping):    
+    for data in [test, train]:
+        # get original indices
+        data["original_index"] = data.index.map(index_mapping)[0]
+        # left join with original df using the new "original_idex" column and the index column of the original data
+        data["original_index"] = pd.merge(left=data, right=original_df[id_col], left_on="original_index", right_index=True)
+    return (test, train)
+
+
+def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
+                                       id_col: str, original_df: pd.DataFrame, target_var: str, output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
     """
     Generates an actual vs. predicted scatter plot for both training and testing datasets.
 
@@ -232,13 +242,20 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
         y_test (pd.Series): Actual values for the test data.
         train_predictions (pd.Series): Predicted values for the training data.
         test_predictions (pd.Series): Predicted values for the test data.
+        id_col: The column name containing the unique IDs.
+        original_df: The original dataframe containing all data.
         target_var (str): The name of the target variable.
         output_path (str): A path to the directory where the output files will be saved.
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
+        index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
     Returns:
         None
     """
+    #
+    if id_col:
+        y_test, y_train = add_original_indices_test_train(y_test, y_train, original_df, id_col, index_mapping)
+    print(y_test, y_train)
     # create actual vs predicted plot
     actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
     actual_vs_predicted_test["Type"] = "Test"
@@ -246,7 +263,7 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
     actual_vs_predicted_train["Type"] = "Train"
     actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
     fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Predicted", 
-                        x_label='Actual', y_label="Predicted", hover_labels='Actual', title="Predicted vs Actual Values " + target_var , 
+                        x_label='Actual', y_label="Predicted", hover_labels=[id_col, 'Actual'], title="Predicted vs Actual Values " + target_var , 
                         colour_col="Type", trend_line=None)
     # add y = x line
     # find start and end coords for the y = x line by finding the min and max Actual values from the training set
@@ -421,7 +438,7 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
         model (Any): The trained machine learning model.
         target_var (str): The target variable name.
         id_col (str): Name of the unique id variable for each row in the dataset.
-        target_df (str): Original full feature and target df with id col.
+        original_df (str): Original full feature and target df with id col.
         x_train (pd.DataFrame): Training features.
         y_train (pd.Series): Training target.
         x_test (pd.DataFrame): Test features.
@@ -441,7 +458,7 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
     """
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(full_pipeline, x_train)
     create_permutation_feature_importance_plot(full_pipeline, x_test, y_test, target_var, feature_sign_dict, col_labels, output_label, output_path)
-    create_actual_vs_predicted_scatter(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
+    create_actual_vs_predicted_scatter(y_train, y_test, train_predictions, test_predictions, id_col, original_df, target_var, output_label, output_path, index_mapping)
     create_residuals_plot(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
     create_partial_dependence_plots(full_pipeline, x_train, target_var, output_label, output_path, col_labels, pd_y_label, feature_diff_dict)
     if shap_plots:
