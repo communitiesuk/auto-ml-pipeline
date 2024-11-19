@@ -224,11 +224,17 @@ def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame,
 
 
 def add_original_indices_test_train(test, train, original_df, id_col, index_mapping):    
-    for data in [test, train]:
+    for i, data in enumerate([train, test]):
         # get original indices
-        data["original_index"] = data.index.map(index_mapping)[0]
+        data = pd.DataFrame(data, columns=["target"])
+        data["original_index"] = data.index.map(lambda x: index_mapping[x][1])
         # left join with original df using the new "original_idex" column and the index column of the original data
-        data["original_index"] = pd.merge(left=data, right=original_df[id_col], left_on="original_index", right_index=True)
+        merged = pd.merge(left=data, right=original_df[id_col], left_on="original_index", right_index=True)[["target", id_col]]
+         # Replace data in the original list (train/test)
+        if i == 0:
+            train = merged
+        else:
+            test = merged
     return (test, train)
 
 
