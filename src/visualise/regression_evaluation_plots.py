@@ -287,12 +287,9 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
         y_test = add_original_indices_test_train(y_test, "test", original_df, id_col, index_mapping)
         y_train = add_original_indices_test_train(y_train, "train", original_df, id_col, index_mapping)
     # create actual vs predicted plot
-    #actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
     actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_test["Type"] = "Test"
-    #actual_vs_predicted_train = pd.DataFrame(data={"Actual": y_train, "Predicted": train_predictions})
     actual_vs_predicted_train = pd.merge(left=y_train, right=pd.DataFrame(data={"Predicted": train_predictions}), left_index=True, right_index=True)
-
     actual_vs_predicted_train["Type"] = "Train"
     actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
     fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Predicted", 
@@ -319,7 +316,8 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
     return
 
 
-def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, target_var: str, output_path: str, output_label: str = "") -> go.Figure:
+def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
+                          id_col: str, original_df: pd.DataFrame, target_var: str, output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
     """
     Generates a residuals plot for both training and testing datasets.
 
@@ -335,16 +333,20 @@ def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictio
     Returns:
         go.Figure: Plotly figure object.
     """
+    # get the original location codes/names to add as hover labels
+    if id_col:
+        y_test = add_original_indices_test_train(y_test, "test", original_df, id_col, index_mapping)
+        y_train = add_original_indices_test_train(y_train, "train", original_df, id_col, index_mapping)
     # create actual vs predicted plot
-    actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
+    actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_test['Residuals'] = actual_vs_predicted_test['Predicted'] - actual_vs_predicted_test['Actual']
     actual_vs_predicted_test['Type'] = 'Test'
-    actual_vs_predicted_train = pd.DataFrame(data={"Actual": y_train, "Predicted": train_predictions})
+    actual_vs_predicted_train = pd.merge(left=y_train, right=pd.DataFrame(data={"Predicted": train_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_train['Residuals'] = actual_vs_predicted_train['Predicted'] - actual_vs_predicted_train['Actual']
     actual_vs_predicted_train['Type'] = 'Train'
     actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
     fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Residuals", 
-                        x_label='Actual', y_label="Residuals", hover_labels='Actual', title="Residuals vs Actual Values " + target_var, 
+                        x_label='Actual', y_label="Residuals", hover_labels=id_col, title="Residuals vs Actual Values " + target_var, 
                         colour_col="Type", trend_line=None)
     # add y = 0 line
     # find start and end x coords for the y = 0 line by finding the min and max Actual values from the training set
@@ -364,7 +366,7 @@ def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictio
         width=1000,
     )
     fig.write_html(f"{output_path}/{output_label}_residuals_scatter_{target_var}.html")
-    return fig
+    return
 
 
 def create_tree_plot(model: Any, x_train: pd.DataFrame, target_var: str, output_path: str, output_label: str = "") -> None:
@@ -492,7 +494,7 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(full_pipeline, x_train)
     create_permutation_feature_importance_plot(full_pipeline, x_test, y_test, target_var, feature_sign_dict, col_labels, output_label, output_path)
     create_actual_vs_predicted_scatter(y_train, y_test, train_predictions, test_predictions, id_col, original_df, target_var, output_label, output_path, index_mapping)
-    create_residuals_plot(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
+    create_residuals_plot(y_train, y_test, train_predictions, test_predictions, id_col, original_df, target_var, output_label, output_path, index_mapping)
     create_partial_dependence_plots(full_pipeline, x_train, target_var, output_label, output_path, col_labels, pd_y_label, feature_diff_dict)
     if shap_plots:
         create_shap_plots(id_col, original_df, x_test, x_train, full_pipeline, target_var, shap_id_keys, output_label, output_path, index_mapping) 
