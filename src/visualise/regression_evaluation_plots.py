@@ -6,9 +6,10 @@ os.chdir(repo.working_tree_dir)
 import sys
 sys.path.append(repo.working_tree_dir)
 
-from typing import Any, Tuple
+from typing import Any, Tuple, Dict
 import shap
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -223,20 +224,42 @@ def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame,
     return
 
 
-def add_original_indices_test_train(test, train, original_df, id_col, index_mapping):    
-    for i, data in enumerate([train, test]):
-        # get original indices
-        data = pd.DataFrame(data, columns=["Actual"])
-        data["original_index"] = data.index.map(lambda x: index_mapping[x][1])
-        print(data["original_index"])
-        # left join with original df using the new "original_idex" column and the index column of the original data
-        merged = pd.merge(left=data, right=original_df[id_col], left_on="original_index", right_index=True)[["Actual", id_col]]
-         # Replace data in the original list (train/test)
-        if i == 0:
-            train = merged
-        else:
-            test = merged
-    return (test, train)
+def add_original_indices_test_train(data: np.ndarray, data_type: str, original_df: pd.DataFrame,
+                                    id_col: str, index_mapping: Dict[Any, Tuple[str, str]] ) -> pd.DataFrame:
+    """
+    Maps original indices to the original DataFrame and adds the id code/name for plot labelling.
+
+    Parameters:
+        data (np.ndarray): The input data (e.g., predictions or actual values) as a NumPy array.
+        data_type (str): A string indicating the data type ("train" or "test") to filter the index mapping.
+        original_df (pd.DataFrame): The original DataFrame containing the index column to join on.
+        id_col (str): The name of the column in `original_df` to join with.
+        index_mapping (Dict[Any, Tuple[str, str]]): A dictionary where keys are current indices and values are tuples of 
+            (original_index, data_type) specifying the original index and the dataset type.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the input data with its original id code/name
+        from `original_df`.
+
+    """
+    # Filter index mapping and create a reverse mapping of filtered entries
+    data_map = {v[1]: k for k, v in index_mapping.items() if v[0] == data_type}
+    
+    # Create a DataFrame from the input data
+    data = pd.DataFrame(data, columns=["Actual"])
+    
+    # Map original indices to the DataFrame index
+    data["original_index"] = data.index.map(data_map)
+    
+    # Perform a left join with the original DataFrame on the "original_index"
+    merged = pd.merge(
+        left=data,
+        right=original_df[[id_col]],
+        left_on="original_index",
+        right_index=True
+    )[["Actual", id_col]]
+
+    return merged
 
 
 def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
@@ -259,10 +282,10 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
     Returns:
         None
     """
-    #
+    # get the original location codes/names to add as hover labels
     if id_col:
-        y_test, y_train = add_original_indices_test_train(y_test, y_train, original_df, id_col, index_mapping)
-    print(y_test, y_train)
+        y_test = add_original_indices_test_train(y_test, "test", original_df, id_col, index_mapping)
+        y_train = add_original_indices_test_train(y_train, "train", original_df, id_col, index_mapping)
     # create actual vs predicted plot
     #actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
     actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
@@ -272,7 +295,6 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
 
     actual_vs_predicted_train["Type"] = "Train"
     actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
-    print(actual_vs_predicted)
     fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Predicted", 
                         x_label='Actual', y_label="Predicted", hover_labels=id_col, title="Predicted vs Actual Values " + target_var , 
                         colour_col="Type", trend_line=None)
