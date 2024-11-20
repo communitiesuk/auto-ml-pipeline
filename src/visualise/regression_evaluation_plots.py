@@ -226,10 +226,11 @@ def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame,
 def add_original_indices_test_train(test, train, original_df, id_col, index_mapping):    
     for i, data in enumerate([train, test]):
         # get original indices
-        data = pd.DataFrame(data, columns=["target"])
+        data = pd.DataFrame(data, columns=["Actual"])
         data["original_index"] = data.index.map(lambda x: index_mapping[x][1])
+        print(data["original_index"])
         # left join with original df using the new "original_idex" column and the index column of the original data
-        merged = pd.merge(left=data, right=original_df[id_col], left_on="original_index", right_index=True)[["target", id_col]]
+        merged = pd.merge(left=data, right=original_df[id_col], left_on="original_index", right_index=True)[["Actual", id_col]]
          # Replace data in the original list (train/test)
         if i == 0:
             train = merged
@@ -263,13 +264,17 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
         y_test, y_train = add_original_indices_test_train(y_test, y_train, original_df, id_col, index_mapping)
     print(y_test, y_train)
     # create actual vs predicted plot
-    actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
+    #actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
+    actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_test["Type"] = "Test"
-    actual_vs_predicted_train = pd.DataFrame(data={"Actual": y_train, "Predicted": train_predictions})
+    #actual_vs_predicted_train = pd.DataFrame(data={"Actual": y_train, "Predicted": train_predictions})
+    actual_vs_predicted_train = pd.merge(left=y_train, right=pd.DataFrame(data={"Predicted": train_predictions}), left_index=True, right_index=True)
+
     actual_vs_predicted_train["Type"] = "Train"
     actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
+    print(actual_vs_predicted)
     fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Predicted", 
-                        x_label='Actual', y_label="Predicted", hover_labels=[id_col, 'Actual'], title="Predicted vs Actual Values " + target_var , 
+                        x_label='Actual', y_label="Predicted", hover_labels=id_col, title="Predicted vs Actual Values " + target_var , 
                         colour_col="Type", trend_line=None)
     # add y = x line
     # find start and end coords for the y = x line by finding the min and max Actual values from the training set

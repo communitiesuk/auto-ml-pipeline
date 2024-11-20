@@ -40,7 +40,7 @@ target_var_list = ["Index of Multiple Deprivation (IMD) Score"]
 
 # select features list - use to subset specific features of interest, if blank it will use all features. 
 # Change feature_filter__filter_features hyperparm when usings, see linear regression model param dictionary for implementation
-select_features_list = []
+select_features_list = []                                                                                                                         
 
 # model dictionary and hyperparameter search space
 model_param_dict = { 
@@ -51,7 +51,7 @@ model_param_dict = {
         # Lasso(): {
         #     'model__fit_intercept': [True, False],
         #     'model__alpha': [0.001, 0.01, 0.1, 0.5, 1],
-        #     },
+        #     },                                     
         # RandomForestRegressor(): {
         #     'model__max_depth': [None, 25, 50],
         #     'model__max_features': [1, 0.5, 'sqrt'],
