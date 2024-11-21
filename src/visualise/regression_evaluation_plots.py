@@ -230,7 +230,7 @@ def add_original_indices_test_train(data: np.ndarray, data_type: str, original_d
     Maps original indices to the original DataFrame and adds the id code/name for plot labelling.
 
     Parameters:
-        data (np.ndarray): The input data (e.g., predictions or actual values) as a NumPy array.
+        data (np.ndarray): The input data (e.g., test or train target values) as a NumPy array.
         data_type (str): A string indicating the data type ("train" or "test") to filter the index mapping.
         original_df (pd.DataFrame): The original DataFrame containing the index column to join on.
         id_col (str): The name of the column in `original_df` to join with.
@@ -242,7 +242,7 @@ def add_original_indices_test_train(data: np.ndarray, data_type: str, original_d
         from `original_df`.
 
     """
-    # Filter index mapping and create a reverse mapping of filtered entries
+    # Filter index_mapping for test or train data only and create a reverse mapping of indices
     data_map = {v[1]: k for k, v in index_mapping.items() if v[0] == data_type}
     
     # Create a DataFrame from the input data
@@ -331,7 +331,7 @@ def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictio
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
 
     Returns:
-        go.Figure: Plotly figure object.
+        None
     """
     # get the original location codes/names to add as hover labels
     if id_col:
