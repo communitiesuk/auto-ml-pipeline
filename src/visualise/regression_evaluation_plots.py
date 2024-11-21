@@ -6,9 +6,10 @@ os.chdir(repo.working_tree_dir)
 import sys
 sys.path.append(repo.working_tree_dir)
 
-from typing import Any, Tuple
+from typing import Any, Tuple, Dict
 import shap
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -223,7 +224,46 @@ def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame,
     return
 
 
-def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, target_var: str, output_path: str, output_label: str = "") -> None:
+def add_original_indices_test_train(data: np.ndarray, data_type: str, original_df: pd.DataFrame,
+                                    id_col: str, index_mapping: Dict[Any, Tuple[str, str]] ) -> pd.DataFrame:
+    """
+    Maps original indices to the original DataFrame and adds the id code/name for plot labelling.
+
+    Parameters:
+        data (np.ndarray): The input data (e.g., test or train target values) as a NumPy array.
+        data_type (str): A string indicating the data type ("train" or "test") to filter the index mapping.
+        original_df (pd.DataFrame): The original DataFrame containing the index column to join on.
+        id_col (str): The name of the column in `original_df` to join with.
+        index_mapping (Dict[Any, Tuple[str, str]]): A dictionary where keys are current indices and values are tuples of 
+            (original_index, data_type) specifying the original index and the dataset type.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the input data with its original id code/name
+        from `original_df`.
+
+    """
+    # Filter index_mapping for test or train data only and create a reverse mapping of indices
+    data_map = {v[1]: k for k, v in index_mapping.items() if v[0] == data_type}
+    
+    # Create a DataFrame from the input data
+    data = pd.DataFrame(data, columns=["Actual"])
+    
+    # Map original indices to the DataFrame index
+    data["original_index"] = data.index.map(data_map)
+    
+    # Perform a left join with the original DataFrame on the "original_index"
+    merged = pd.merge(
+        left=data,
+        right=original_df[[id_col]],
+        left_on="original_index",
+        right_index=True
+    )[["Actual", id_col]]
+
+    return merged
+
+
+def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
+                                       id_col: str, original_df: pd.DataFrame, target_var: str, output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
     """
     Generates an actual vs. predicted scatter plot for both training and testing datasets.
 
@@ -232,21 +272,28 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
         y_test (pd.Series): Actual values for the test data.
         train_predictions (pd.Series): Predicted values for the training data.
         test_predictions (pd.Series): Predicted values for the test data.
+        id_col: The column name containing the unique IDs.
+        original_df: The original dataframe containing all data.
         target_var (str): The name of the target variable.
         output_path (str): A path to the directory where the output files will be saved.
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
+        index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
     Returns:
         None
     """
+    # get the original location codes/names to add as hover labels
+    if id_col:
+        y_test = add_original_indices_test_train(y_test, "test", original_df, id_col, index_mapping)
+        y_train = add_original_indices_test_train(y_train, "train", original_df, id_col, index_mapping)
     # create actual vs predicted plot
-    actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
+    actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_test["Type"] = "Test"
-    actual_vs_predicted_train = pd.DataFrame(data={"Actual": y_train, "Predicted": train_predictions})
+    actual_vs_predicted_train = pd.merge(left=y_train, right=pd.DataFrame(data={"Predicted": train_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_train["Type"] = "Train"
     actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
     fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Predicted", 
-                        x_label='Actual', y_label="Predicted", hover_labels='Actual', title="Predicted vs Actual Values " + target_var , 
+                        x_label='Actual', y_label="Predicted", hover_labels=id_col, title="Predicted vs Actual Values " + target_var , 
                         colour_col="Type", trend_line=None)
     # add y = x line
     # find start and end coords for the y = x line by finding the min and max Actual values from the training set
@@ -269,7 +316,8 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
     return
 
 
-def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, target_var: str, output_path: str, output_label: str = "") -> go.Figure:
+def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
+                          id_col: str, original_df: pd.DataFrame, target_var: str, output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
     """
     Generates a residuals plot for both training and testing datasets.
 
@@ -283,18 +331,22 @@ def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictio
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
 
     Returns:
-        go.Figure: Plotly figure object.
+        None
     """
+    # get the original location codes/names to add as hover labels
+    if id_col:
+        y_test = add_original_indices_test_train(y_test, "test", original_df, id_col, index_mapping)
+        y_train = add_original_indices_test_train(y_train, "train", original_df, id_col, index_mapping)
     # create actual vs predicted plot
-    actual_vs_predicted_test = pd.DataFrame(data={"Actual": y_test, "Predicted": test_predictions})
+    actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_test['Residuals'] = actual_vs_predicted_test['Predicted'] - actual_vs_predicted_test['Actual']
     actual_vs_predicted_test['Type'] = 'Test'
-    actual_vs_predicted_train = pd.DataFrame(data={"Actual": y_train, "Predicted": train_predictions})
+    actual_vs_predicted_train = pd.merge(left=y_train, right=pd.DataFrame(data={"Predicted": train_predictions}), left_index=True, right_index=True)
     actual_vs_predicted_train['Residuals'] = actual_vs_predicted_train['Predicted'] - actual_vs_predicted_train['Actual']
     actual_vs_predicted_train['Type'] = 'Train'
     actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
     fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Residuals", 
-                        x_label='Actual', y_label="Residuals", hover_labels='Actual', title="Residuals vs Actual Values " + target_var, 
+                        x_label='Actual', y_label="Residuals", hover_labels=id_col, title="Residuals vs Actual Values " + target_var, 
                         colour_col="Type", trend_line=None)
     # add y = 0 line
     # find start and end x coords for the y = 0 line by finding the min and max Actual values from the training set
@@ -314,7 +366,7 @@ def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictio
         width=1000,
     )
     fig.write_html(f"{output_path}/{output_label}_residuals_scatter_{target_var}.html")
-    return fig
+    return
 
 
 def create_tree_plot(model: Any, x_train: pd.DataFrame, target_var: str, output_path: str, output_label: str = "") -> None:
@@ -421,7 +473,7 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
         model (Any): The trained machine learning model.
         target_var (str): The target variable name.
         id_col (str): Name of the unique id variable for each row in the dataset.
-        target_df (str): Original full feature and target df with id col.
+        original_df (str): Original full feature and target df with id col.
         x_train (pd.DataFrame): Training features.
         y_train (pd.Series): Training target.
         x_test (pd.DataFrame): Test features.
@@ -441,8 +493,8 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
     """
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(full_pipeline, x_train)
     create_permutation_feature_importance_plot(full_pipeline, x_test, y_test, target_var, feature_sign_dict, col_labels, output_label, output_path)
-    create_actual_vs_predicted_scatter(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
-    create_residuals_plot(y_train, y_test, train_predictions, test_predictions, target_var, output_label, output_path)
+    create_actual_vs_predicted_scatter(y_train, y_test, train_predictions, test_predictions, id_col, original_df, target_var, output_label, output_path, index_mapping)
+    create_residuals_plot(y_train, y_test, train_predictions, test_predictions, id_col, original_df, target_var, output_label, output_path, index_mapping)
     create_partial_dependence_plots(full_pipeline, x_train, target_var, output_label, output_path, col_labels, pd_y_label, feature_diff_dict)
     if shap_plots:
         create_shap_plots(id_col, original_df, x_test, x_train, full_pipeline, target_var, shap_id_keys, output_label, output_path, index_mapping) 
