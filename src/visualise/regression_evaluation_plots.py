@@ -1,9 +1,11 @@
 # Set up Git repository and path
 import git
 import os
-repo = git.Repo('.', search_parent_directories=True)
+
+repo = git.Repo(".", search_parent_directories=True)
 os.chdir(repo.working_tree_dir)
 import sys
+
 sys.path.append(repo.working_tree_dir)
 
 from typing import Any, Tuple, Dict
@@ -15,7 +17,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import plotly.graph_objects as go
 from sklearn import tree
-from sklearn.inspection import partial_dependence, PartialDependenceDisplay, permutation_importance
+from sklearn.inspection import (
+    PartialDependenceDisplay,
+    permutation_importance,
+)
 
 from src.visualise.scatter_chart import scatter_chart
 
@@ -24,16 +29,25 @@ SMALL_SIZE = 12
 MEDIUM_SIZE = 14
 BIGGER_SIZE = 16
 
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
+plt.rc("axes", titlesize=SMALL_SIZE)  # fontsize of the axes title
+plt.rc("axes", labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+plt.rc("ytick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+plt.rc("legend", fontsize=SMALL_SIZE)  # legend fontsize
+plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
-def create_partial_dependence_plots(model: Any, x_train: pd.DataFrame, target_var: str, output_path: str, output_label: str = "",  col_labels: dict={}, pd_y_label: str = "", feature_diff_dict: dict={}) -> None:
+def create_partial_dependence_plots(
+    model: Any,
+    x_train: pd.DataFrame,
+    target_var: str,
+    output_path: str,
+    output_label: str = "",
+    col_labels: dict = {},
+    pd_y_label: str = "",
+    feature_diff_dict: dict = {},
+) -> None:
     """
     Generates partial dependence plots (PDPs) for a given machine learning model.
 
@@ -51,7 +65,7 @@ def create_partial_dependence_plots(model: Any, x_train: pd.DataFrame, target_va
         None
 
     This function creates a grid of partial dependence plots, visualising the marginal effect of each feature in
-    x_train on the target variable. 
+    x_train on the target variable.
 
     The plots are saved to a PNG image file with a descriptive filename based on the `output_label` and `target_var`.
 
@@ -61,7 +75,9 @@ def create_partial_dependence_plots(model: Any, x_train: pd.DataFrame, target_va
     # Compute Rows required to plot each feature
     n_cols = 3
     n_features = len(x_train.columns)
-    n_rows = (n_features + n_cols - 1) // n_cols  # This ensures the ceiling of n_features / n_cols
+    n_rows = (
+        n_features + n_cols - 1
+    ) // n_cols  # This ensures the ceiling of n_features / n_cols
 
     plt.rcParams["font.family"] = "Arial"
     plt.rcParams["font.size"] = 20
@@ -86,9 +102,16 @@ def create_partial_dependence_plots(model: Any, x_train: pd.DataFrame, target_va
             # remove axes objects for dummies
             fig.delaxes(axs[n_features - j - 1])
         # select non empty axes only
-        axs = axs[0: -dummy_count]
+        axs = axs[0:-dummy_count]
 
-    display = PartialDependenceDisplay.from_estimator(model, x_train, features_sorted, ax=axs, n_cols=n_cols, line_kw={"color": "#4575b4"})
+    display = PartialDependenceDisplay.from_estimator(
+        model,
+        x_train,
+        features_sorted,
+        ax=axs,
+        n_cols=n_cols,
+        line_kw={"color": "#4575b4"},
+    )
 
     # Create PartialDependenceDisplay for each feature and apply custom formatting
     for i, feature in enumerate(features_sorted):
@@ -97,26 +120,34 @@ def create_partial_dependence_plots(model: Any, x_train: pd.DataFrame, target_va
         axs[i].set_xlabel(new_title)
         if i % n_cols == 0:
             axs[i].set_ylabel(pd_y_label)
-        else: 
-            axs[i].set_ylabel('')
+        else:
+            axs[i].set_ylabel("")
         # add target difference annotation
 
         x_data = axs[i].get_lines()[0].get_xdata()
         y_data = axs[i].get_lines()[0].get_ydata()
-        arr = mpatches.FancyArrowPatch((x_data[-1], y_data[0]), (x_data[-1], y_data[-1]),
-                               arrowstyle='|-|')
+        arr = mpatches.FancyArrowPatch(
+            (x_data[-1], y_data[0]), (x_data[-1], y_data[-1]), arrowstyle="|-|"
+        )
         axs[i].add_patch(arr)
-        axs[i].annotate(int(round(abs(features_sorted_differences[i]), 0)), (2, .5), xycoords=arr, ha='left', va='center', fontsize=12)
+        axs[i].annotate(
+            int(round(abs(features_sorted_differences[i]), 0)),
+            (2, 0.5),
+            xycoords=arr,
+            ha="left",
+            va="center",
+            fontsize=12,
+        )
 
-        axs[i].spines['top'].set_visible(False)
-        axs[i].spines['right'].set_visible(False)
+        axs[i].spines["top"].set_visible(False)
+        axs[i].spines["right"].set_visible(False)
         axs[i].xaxis.set_tick_params(bottom=True, top=False)
         axs[i].yaxis.set_tick_params(left=True, right=False)
         plt.setp(display.deciles_vlines_, visible=False)
-    
+
     plt.setp(display.deciles_vlines_, visible=False)
-    
-    fig.suptitle('Partial Dependence Plots')
+
+    fig.suptitle("Partial Dependence Plots")
     fig.tight_layout()
     fig.savefig(f"{output_path}/{output_label}_pd_plots_{target_var}.png")
     return
@@ -127,7 +158,7 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, d
     Creates a dictionary indicating the sign (positive or negative) of the relationship between each feature and the target variable.
 
     Args:
-        model (Any): The trained machine learning model or pipeline. 
+        model (Any): The trained machine learning model or pipeline.
         x_train (pd.DataFrame): The training data used to fit the model.
 
     Returns:
@@ -145,33 +176,70 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, d
     feature_diff_dict = {}
     select_features_list = x_train.columns
     for i, feature in enumerate(select_features_list):
-        y_data = PartialDependenceDisplay.from_estimator(model, x_train, [select_features_list[i]]).lines_[0, 0].get_ydata()
+        y_data = (
+            PartialDependenceDisplay.from_estimator(
+                model, x_train, [select_features_list[i]]
+            )
+            .lines_[0, 0]
+            .get_ydata()
+        )
         diff = y_data[len(y_data) - 1] - y_data[0]
         if diff > 0:
             feature_sign_dict[feature] = 1
         else:
             feature_sign_dict[feature] = -1
         feature_diff_dict[feature] = diff
-    return  feature_sign_dict, feature_diff_dict
+    return feature_sign_dict, feature_diff_dict
 
 
-def create_feature_importance_plot(model, x_train, target_var, sign_dict, col_labels, output_label: str ="", output_path: str= ""):
-    global_importances = pd.DataFrame(data={"Importance": model.feature_importances_, "Feature": x_train.columns})
+def create_feature_importance_plot(
+    model,
+    x_train,
+    target_var,
+    sign_dict,
+    col_labels,
+    output_label: str = "",
+    output_path: str = "",
+) -> None:
+    global_importances = pd.DataFrame(
+        data={"Importance": model.feature_importances_, "Feature": x_train.columns}
+    )
     global_importances.sort_values(by="Importance", ascending=True, inplace=True)
-    global_importances["sign"] = global_importances["Feature"].map(sign_dict).astype(str)
+    global_importances["sign"] = (
+        global_importances["Feature"].map(sign_dict).astype(str)
+    )
     global_importances["Feature"] = global_importances["Feature"].replace(col_labels)
-    fig = px.bar(global_importances, y="Importance", x="Feature", color="sign", title="Global Feature Importance", color_discrete_map={"1": "#4575b4", "-1": "#d73027"}, labels=col_labels)
+    fig = px.bar(
+        global_importances,
+        y="Importance",
+        x="Feature",
+        color="sign",
+        title="Global Feature Importance",
+        color_discrete_map={"1": "#4575b4", "-1": "#d73027"},
+        labels=col_labels,
+    )
     fig.update_layout(
-        xaxis_categoryorder = 'total ascending',
+        xaxis_categoryorder="total ascending",
         showlegend=False,
         height=750,
         width=1000,
     )
-    fig.write_html(f"{output_path}/{output_label}_tree_feature_importance_{target_var}.html")
+    fig.write_html(
+        f"{output_path}/{output_label}_tree_feature_importance_{target_var}.html"
+    )
     return
 
 
-def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame, y_test: pd.Series, target_var: str, sign_dict: dict, col_labels: dict, output_path: str, output_label: str = "") -> None:
+def create_permutation_feature_importance_plot(
+    model: Any,
+    x_test: pd.DataFrame,
+    y_test: pd.Series,
+    target_var: str,
+    sign_dict: dict,
+    col_labels: dict,
+    output_path: str,
+    output_label: str = "",
+) -> None:
     """
     Creates permutation feature importance plot for any given model (not just tree based models).
 
@@ -189,9 +257,9 @@ def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame,
         None
     """
     # get permutation importances array
-    feature_importances = permutation_importance(model, x_test, y_test,
-                           n_repeats=30,
-                           random_state=0)
+    feature_importances = permutation_importance(
+        model, x_test, y_test, n_repeats=30, random_state=0
+    )
     # sort by most important features
     sorted_idx = feature_importances.importances_mean.argsort()
 
@@ -206,26 +274,38 @@ def create_permutation_feature_importance_plot(model: Any, x_test: pd.DataFrame,
         combined_df = pd.concat([temp_df, combined_df], axis=0)
 
     combined_df["sign"] = combined_df["variable"].map(sign_dict).astype(str)
-    combined_df["variable"] = combined_df["variable"].replace(col_labels) 
+    combined_df["variable"] = combined_df["variable"].replace(col_labels)
     # plotly box plot
-    fig = px.box(combined_df, y="variable", x="importances", color="sign", title="Permutation Feature Importance", color_discrete_map={"1": "#4575b4", "-1": "#d73027"}, points=False)
-    fig.add_vline(x=0, line_width=2, line_dash="dash", line_color="grey")
-    fig.update_layout(
-    yaxis_title="",
-    xaxis_title="Importance"
+    fig = px.box(
+        combined_df,
+        y="variable",
+        x="importances",
+        color="sign",
+        title="Permutation Feature Importance",
+        color_discrete_map={"1": "#4575b4", "-1": "#d73027"},
+        points=False,
     )
-    fig.update_layout(yaxis_categoryorder = 'total ascending')
+    fig.add_vline(x=0, line_width=2, line_dash="dash", line_color="grey")
+    fig.update_layout(yaxis_title="", xaxis_title="Importance")
+    fig.update_layout(yaxis_categoryorder="total ascending")
     fig.update_layout(showlegend=False)
     fig.update_layout(
         height=750,
         width=1000,
     )
-    fig.write_html(f"{output_path}/{output_label}_permutation_feature_importance_{target_var}.html")
+    fig.write_html(
+        f"{output_path}/{output_label}_permutation_feature_importance_{target_var}.html"
+    )
     return
 
 
-def add_original_indices_test_train(data: np.ndarray, data_type: str, original_df: pd.DataFrame,
-                                    id_col: str, index_mapping: Dict[Any, Tuple[str, str]] ) -> pd.DataFrame:
+def add_original_indices_test_train(
+    data: np.ndarray,
+    data_type: str,
+    original_df: pd.DataFrame,
+    id_col: str,
+    index_mapping: Dict[Any, Tuple[str, str]],
+) -> pd.DataFrame:
     """
     Maps original indices to the original DataFrame and adds the id code/name for plot labelling.
 
@@ -234,7 +314,7 @@ def add_original_indices_test_train(data: np.ndarray, data_type: str, original_d
         data_type (str): A string indicating the data type ("train" or "test") to filter the index mapping.
         original_df (pd.DataFrame): The original DataFrame containing the index column to join on.
         id_col (str): The name of the column in `original_df` to join with.
-        index_mapping (Dict[Any, Tuple[str, str]]): A dictionary where keys are current indices and values are tuples of 
+        index_mapping (Dict[Any, Tuple[str, str]]): A dictionary where keys are current indices and values are tuples of
             (original_index, data_type) specifying the original index and the dataset type.
 
     Returns:
@@ -244,26 +324,36 @@ def add_original_indices_test_train(data: np.ndarray, data_type: str, original_d
     """
     # Filter index_mapping for test or train data only and create a reverse mapping of indices
     data_map = {v[1]: k for k, v in index_mapping.items() if v[0] == data_type}
-    
+
     # Create a DataFrame from the input data
     data = pd.DataFrame(data, columns=["Actual"])
-    
+
     # Map original indices to the DataFrame index
     data["original_index"] = data.index.map(data_map)
-    
+
     # Perform a left join with the original DataFrame on the "original_index"
     merged = pd.merge(
         left=data,
         right=original_df[[id_col]],
         left_on="original_index",
-        right_index=True
+        right_index=True,
     )[["Actual", id_col]]
 
     return merged
 
 
-def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
-                                       id_col: str, original_df: pd.DataFrame, target_var: str, output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
+def create_actual_vs_predicted_scatter(
+    y_train: pd.Series,
+    y_test: pd.Series,
+    train_predictions: pd.Series,
+    test_predictions: pd.Series,
+    id_col: str,
+    original_df: pd.DataFrame,
+    target_var: str,
+    output_path: str,
+    output_label: str = "",
+    index_mapping: dict = {},
+) -> None:
     """
     Generates an actual vs. predicted scatter plot for both training and testing datasets.
 
@@ -284,40 +374,83 @@ def create_actual_vs_predicted_scatter(y_train: pd.Series, y_test: pd.Series, tr
     """
     # get the original location codes/names to add as hover labels
     if id_col:
-        y_test = add_original_indices_test_train(y_test, "test", original_df, id_col, index_mapping)
-        y_train = add_original_indices_test_train(y_train, "train", original_df, id_col, index_mapping)
+        y_test = add_original_indices_test_train(
+            y_test, "test", original_df, id_col, index_mapping
+        )
+        y_train = add_original_indices_test_train(
+            y_train, "train", original_df, id_col, index_mapping
+        )
     # create actual vs predicted plot
-    actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
+    actual_vs_predicted_test = pd.merge(
+        left=y_test,
+        right=pd.DataFrame(data={"Predicted": test_predictions}),
+        left_index=True,
+        right_index=True,
+    )
     actual_vs_predicted_test["Type"] = "Test"
-    actual_vs_predicted_train = pd.merge(left=y_train, right=pd.DataFrame(data={"Predicted": train_predictions}), left_index=True, right_index=True)
+    actual_vs_predicted_train = pd.merge(
+        left=y_train,
+        right=pd.DataFrame(data={"Predicted": train_predictions}),
+        left_index=True,
+        right_index=True,
+    )
     actual_vs_predicted_train["Type"] = "Train"
-    actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
-    fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Predicted", 
-                        x_label='Actual', y_label="Predicted", hover_labels=id_col, title="Predicted vs Actual Values " + target_var , 
-                        colour_col="Type", trend_line=None)
+    actual_vs_predicted = pd.concat(
+        [actual_vs_predicted_test, actual_vs_predicted_train], axis=0
+    )
+    fig = scatter_chart(
+        data=actual_vs_predicted,
+        x_var="Actual",
+        y_var="Predicted",
+        x_label="Actual",
+        y_label="Predicted",
+        hover_labels=id_col,
+        title="Predicted vs Actual Values " + target_var,
+        colour_col="Type",
+        trend_line=None,
+    )
     # add y = x line
     # find start and end coords for the y = x line by finding the min and max Actual values from the training set
-    x_min = pd.concat([actual_vs_predicted_train['Actual'], actual_vs_predicted_test['Actual']]).min()
-    x_max = pd.concat([actual_vs_predicted_train['Actual'], actual_vs_predicted_test['Actual']]).max()
+    x_min = pd.concat(
+        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
+    ).min()
+    x_max = pd.concat(
+        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
+    ).max()
     fig.update_traces(opacity=0.7)
-    fig.add_trace(go.Scatter(
-        x=[x_min, x_max],
-        y=[x_min, x_max],
-        mode="lines",
-        line=go.scatter.Line(color="gray"),
-        name='y = x',
-        line_dash='dash',
-        showlegend=True))
+    fig.add_trace(
+        go.Scatter(
+            x=[x_min, x_max],
+            y=[x_min, x_max],
+            mode="lines",
+            line=go.scatter.Line(color="gray"),
+            name="y = x",
+            line_dash="dash",
+            showlegend=True,
+        )
+    )
     fig.update_layout(
         height=750,
         width=1000,
     )
-    fig.write_html(f"{output_path}/{output_label}_actual_vs_predicted_scatter_{target_var}.html")
+    fig.write_html(
+        f"{output_path}/{output_label}_actual_vs_predicted_scatter_{target_var}.html"
+    )
     return
 
 
-def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictions: pd.Series, test_predictions: pd.Series, 
-                          id_col: str, original_df: pd.DataFrame, target_var: str, output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
+def create_residuals_plot(
+    y_train: pd.Series,
+    y_test: pd.Series,
+    train_predictions: pd.Series,
+    test_predictions: pd.Series,
+    id_col: str,
+    original_df: pd.DataFrame,
+    target_var: str,
+    output_path: str,
+    output_label: str = "",
+    index_mapping: dict = {},
+) -> None:
     """
     Generates a residuals plot for both training and testing datasets.
 
@@ -335,32 +468,67 @@ def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictio
     """
     # get the original location codes/names to add as hover labels
     if id_col:
-        y_test = add_original_indices_test_train(y_test, "test", original_df, id_col, index_mapping)
-        y_train = add_original_indices_test_train(y_train, "train", original_df, id_col, index_mapping)
+        y_test = add_original_indices_test_train(
+            y_test, "test", original_df, id_col, index_mapping
+        )
+        y_train = add_original_indices_test_train(
+            y_train, "train", original_df, id_col, index_mapping
+        )
     # create actual vs predicted plot
-    actual_vs_predicted_test = pd.merge(left=y_test, right=pd.DataFrame(data={"Predicted": test_predictions}), left_index=True, right_index=True)
-    actual_vs_predicted_test['Residuals'] = actual_vs_predicted_test['Predicted'] - actual_vs_predicted_test['Actual']
-    actual_vs_predicted_test['Type'] = 'Test'
-    actual_vs_predicted_train = pd.merge(left=y_train, right=pd.DataFrame(data={"Predicted": train_predictions}), left_index=True, right_index=True)
-    actual_vs_predicted_train['Residuals'] = actual_vs_predicted_train['Predicted'] - actual_vs_predicted_train['Actual']
-    actual_vs_predicted_train['Type'] = 'Train'
-    actual_vs_predicted = pd.concat([actual_vs_predicted_test, actual_vs_predicted_train], axis=0)
-    fig = scatter_chart(data=actual_vs_predicted , x_var="Actual", y_var="Residuals", 
-                        x_label='Actual', y_label="Residuals", hover_labels=id_col, title="Residuals vs Actual Values " + target_var, 
-                        colour_col="Type", trend_line=None)
+    actual_vs_predicted_test = pd.merge(
+        left=y_test,
+        right=pd.DataFrame(data={"Predicted": test_predictions}),
+        left_index=True,
+        right_index=True,
+    )
+    actual_vs_predicted_test["Residuals"] = (
+        actual_vs_predicted_test["Predicted"] - actual_vs_predicted_test["Actual"]
+    )
+    actual_vs_predicted_test["Type"] = "Test"
+    actual_vs_predicted_train = pd.merge(
+        left=y_train,
+        right=pd.DataFrame(data={"Predicted": train_predictions}),
+        left_index=True,
+        right_index=True,
+    )
+    actual_vs_predicted_train["Residuals"] = (
+        actual_vs_predicted_train["Predicted"] - actual_vs_predicted_train["Actual"]
+    )
+    actual_vs_predicted_train["Type"] = "Train"
+    actual_vs_predicted = pd.concat(
+        [actual_vs_predicted_test, actual_vs_predicted_train], axis=0
+    )
+    fig = scatter_chart(
+        data=actual_vs_predicted,
+        x_var="Actual",
+        y_var="Residuals",
+        x_label="Actual",
+        y_label="Residuals",
+        hover_labels=id_col,
+        title="Residuals vs Actual Values " + target_var,
+        colour_col="Type",
+        trend_line=None,
+    )
     # add y = 0 line
     # find start and end x coords for the y = 0 line by finding the min and max Actual values from the training set
-    x_min = pd.concat([actual_vs_predicted_train['Actual'], actual_vs_predicted_test['Actual']]).min()
-    x_max = pd.concat([actual_vs_predicted_train['Actual'], actual_vs_predicted_test['Actual']]).max()
+    x_min = pd.concat(
+        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
+    ).min()
+    x_max = pd.concat(
+        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
+    ).max()
     fig.update_traces(opacity=0.7)
-    fig.add_trace(go.Scatter(
-        x=[x_min, x_max],
-        y=[0, 0],
-        mode="lines",
-        line=go.scatter.Line(color="gray"),
-        name='y = 0',
-        line_dash='dash',
-        showlegend=True))
+    fig.add_trace(
+        go.Scatter(
+            x=[x_min, x_max],
+            y=[0, 0],
+            mode="lines",
+            line=go.scatter.Line(color="gray"),
+            name="y = 0",
+            line_dash="dash",
+            showlegend=True,
+        )
+    )
     fig.update_layout(
         height=750,
         width=1000,
@@ -369,7 +537,13 @@ def create_residuals_plot(y_train: pd.Series, y_test: pd.Series, train_predictio
     return
 
 
-def create_tree_plot(model: Any, x_train: pd.DataFrame, target_var: str, output_path: str, output_label: str = "") -> None:
+def create_tree_plot(
+    model: Any,
+    x_train: pd.DataFrame,
+    target_var: str,
+    output_path: str,
+    output_label: str = "",
+) -> None:
     """
     Creates a plot of the decision tree structure.
 
@@ -383,26 +557,38 @@ def create_tree_plot(model: Any, x_train: pd.DataFrame, target_var: str, output_
     Returns:
         None
     """
-    if not hasattr(model, 'estimators_'):
-        raise ValueError("Model must be a tree-based ensemble with 'estimators_' attribute.")
-    
+    if not hasattr(model, "estimators_"):
+        raise ValueError(
+            "Model must be a tree-based ensemble with 'estimators_' attribute."
+        )
+
     feature_names = list(x_train.columns)
     target_name = [target_var]
-    fig, axes = plt.subplots(nrows = 1, ncols=1, figsize=(12, 12), dpi=600)
-    tree.plot_tree(model.estimators_[0],
-                feature_names=feature_names, 
-                class_names=target_name,
-                filled=False,
-                impurity=False,
-                fontsize=16)
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(12, 12), dpi=600)
+    tree.plot_tree(
+        model.estimators_[0],
+        feature_names=feature_names,
+        class_names=target_name,
+        filled=False,
+        impurity=False,
+        fontsize=16,
+    )
     fig.savefig(f"{output_path}/{output_label}_tree_diagram_{target_var}.png")
     return
 
 
-def create_shap_plots(id_col: str, original_df: pd.DataFrame, 
-                      x_test: pd.DataFrame, x_train: pd.DataFrame,
-                      full_pipeline: any, target_var: str, shap_id_keys: list[str],
-                      output_path: str, output_label: str = "", index_mapping: dict={}) -> None:
+def create_shap_plots(
+    id_col: str,
+    original_df: pd.DataFrame,
+    x_test: pd.DataFrame,
+    x_train: pd.DataFrame,
+    full_pipeline: any,
+    target_var: str,
+    shap_id_keys: list[str],
+    output_path: str,
+    output_label: str = "",
+    index_mapping: dict = {},
+) -> None:
     """
     Creates SHAP force plots for specified IDs.
 
@@ -423,13 +609,13 @@ def create_shap_plots(id_col: str, original_df: pd.DataFrame,
     """
     # init for plotting
     shap.initjs()
-    model = full_pipeline.best_estimator_.named_steps['model']
+    model = full_pipeline.best_estimator_.named_steps["model"]
     try:
         explainer = shap.TreeExplainer(model)
     except Exception as e:
         print(f"SHAP plots not available for non-tree based models. Error: {e}")
-        return 
-    
+        return
+
     for id in shap_id_keys:
         # get index for each id shap_id_keys
         try:
@@ -437,12 +623,12 @@ def create_shap_plots(id_col: str, original_df: pd.DataFrame,
         except IndexError:
             print(f"ID not found in original data: {id}")
             continue
-        
+
         # Check if the index is in x_train or x_test using the mapping
         if original_index in index_mapping:
             dataset_type, row_pos = index_mapping[original_index]
 
-            if dataset_type == 'train':
+            if dataset_type == "train":
                 row_data = x_train.iloc[[row_pos]]
                 x_transformed = full_pipeline.best_estimator_[:-1].transform(row_data)
             else:  # 'test'
@@ -451,20 +637,44 @@ def create_shap_plots(id_col: str, original_df: pd.DataFrame,
             # get shap value
             shap_values = explainer.shap_values(x_transformed)
             # create plot
-            shap.force_plot(explainer.expected_value, shap_values[0], row_data, 
-                            show=False, matplotlib=True, text_rotation=45, contribution_threshold=0.035).savefig(
-                            f'{output_path}/{output_label}_shap_plot_{target_var}_{id}.png',
-                            bbox_inches='tight', dpi=300)
+            shap.force_plot(
+                explainer.expected_value,
+                shap_values[0],
+                row_data,
+                show=False,
+                matplotlib=True,
+                text_rotation=45,
+                contribution_threshold=0.035,
+            ).savefig(
+                f"{output_path}/{output_label}_shap_plot_{target_var}_{id}.png",
+                bbox_inches="tight",
+                dpi=300,
+            )
         else:
             print(f"Index for ID {id} not found in training or test data")
-    return 
+    return
 
 
-def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: str, id_col: str, original_df: pd.DataFrame,
-                                  x_train: pd.DataFrame, y_train: pd.Series, x_test: pd.DataFrame, y_test: pd.Series, 
-                                  train_predictions: pd.Series, test_predictions: pd.Series, 
-                                  output_path: str ,output_label: str = "", col_labels: dict = {}, pd_y_label: str = "", 
-                                  shap_plots: bool=False, shap_id_keys: list=[], index_mapping: dict={}) -> None:
+def create_model_evaluation_plots(
+    full_pipeline: Any,
+    model: Any,
+    target_var: str,
+    id_col: str,
+    original_df: pd.DataFrame,
+    x_train: pd.DataFrame,
+    y_train: pd.Series,
+    x_test: pd.DataFrame,
+    y_test: pd.Series,
+    train_predictions: pd.Series,
+    test_predictions: pd.Series,
+    output_path: str,
+    output_label: str = "",
+    col_labels: dict = {},
+    pd_y_label: str = "",
+    shap_plots: bool = False,
+    shap_id_keys: list = [],
+    index_mapping: dict = {},
+) -> None:
     """
     Generates multiple plots for model evaluation including feature importance, actual vs. predicted, residuals, and partial dependence plots.
 
@@ -491,12 +701,64 @@ def create_model_evaluation_plots(full_pipeline: Any, model: Any, target_var: st
     Returns:
         None
     """
-    feature_sign_dict, feature_diff_dict = create_feature_sign_dict(full_pipeline, x_train)
-    create_permutation_feature_importance_plot(full_pipeline, x_test, y_test, target_var, feature_sign_dict, col_labels, output_label, output_path)
-    create_actual_vs_predicted_scatter(y_train, y_test, train_predictions, test_predictions, id_col, original_df, target_var, output_label, output_path, index_mapping)
-    create_residuals_plot(y_train, y_test, train_predictions, test_predictions, id_col, original_df, target_var, output_label, output_path, index_mapping)
-    create_partial_dependence_plots(full_pipeline, x_train, target_var, output_label, output_path, col_labels, pd_y_label, feature_diff_dict)
+    feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
+        full_pipeline, x_train
+    )
+    create_permutation_feature_importance_plot(
+        full_pipeline,
+        x_test,
+        y_test,
+        target_var,
+        feature_sign_dict,
+        col_labels,
+        output_label,
+        output_path,
+    )
+    create_actual_vs_predicted_scatter(
+        y_train,
+        y_test,
+        train_predictions,
+        test_predictions,
+        id_col,
+        original_df,
+        target_var,
+        output_label,
+        output_path,
+        index_mapping,
+    )
+    create_residuals_plot(
+        y_train,
+        y_test,
+        train_predictions,
+        test_predictions,
+        id_col,
+        original_df,
+        target_var,
+        output_label,
+        output_path,
+        index_mapping,
+    )
+    create_partial_dependence_plots(
+        full_pipeline,
+        x_train,
+        target_var,
+        output_label,
+        output_path,
+        col_labels,
+        pd_y_label,
+        feature_diff_dict,
+    )
     if shap_plots:
-        create_shap_plots(id_col, original_df, x_test, x_train, full_pipeline, target_var, shap_id_keys, output_label, output_path, index_mapping) 
-    return   
-
+        create_shap_plots(
+            id_col,
+            original_df,
+            x_test,
+            x_train,
+            full_pipeline,
+            target_var,
+            shap_id_keys,
+            output_label,
+            output_path,
+            index_mapping,
+        )
+    return
