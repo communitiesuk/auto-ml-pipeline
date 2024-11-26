@@ -1,12 +1,13 @@
-
 from typing import Any
 import git
 import os
 import pickle
 import datetime
-repo = git.Repo('.', search_parent_directories=True)
+
+repo = git.Repo(".", search_parent_directories=True)
 os.chdir(repo.working_tree_dir)
 import sys
+
 sys.path.append(repo.working_tree_dir)
 
 
@@ -17,7 +18,7 @@ import mlflow.sklearn
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import VarianceThreshold # Feature selector
+from sklearn.feature_selection import VarianceThreshold  # Feature selector
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV
 
@@ -25,6 +26,7 @@ from src.visualise.regression_evaluation_plots import create_model_evaluation_pl
 
 
 from sklearn import set_config
+
 set_config(transform_output="pandas")
 
 
@@ -44,7 +46,9 @@ def preprocess_target(df: pd.DataFrame, target_col: str) -> np.ndarray:
     return target
 
 
-def preprocess_features(df: pd.DataFrame, cols_to_drop: list=None, encode_categoricals: bool=True) -> pd.DataFrame:
+def preprocess_features(
+    df: pd.DataFrame, cols_to_drop: list = None, encode_categoricals: bool = True
+) -> pd.DataFrame:
     """
     Preprocess features by dropping specified columns and performing dummy encoding.
 
@@ -65,11 +69,13 @@ def preprocess_features(df: pd.DataFrame, cols_to_drop: list=None, encode_catego
 
 
 class FilterFeatures(BaseEstimator, TransformerMixin):
-    def __init__(self, filter_features=False, feature_filter_list=None): #
+    def __init__(self, filter_features=False, feature_filter_list=None):  #
         self.filter_features = filter_features
         self.feature_filter_list = feature_filter_list
+
     def fit(self, x, y=None):
-        return self # nothing else to do
+        return self  # nothing else to do
+
     def transform(self, x, y=None):
         if self.filter_features:
             x_filtered = x[self.feature_filter_list]
@@ -94,7 +100,14 @@ def display_scores(scores: np.ndarray) -> tuple:
     return (scores, scores.mean(), scores.std())
 
 
-def evaluate_model(full_pipeline: object, best_model: object, x_train: pd.DataFrame, y_train: np.ndarray, x_test: pd.DataFrame, y_test: np.ndarray) -> tuple:
+def evaluate_model(
+    full_pipeline: object,
+    best_model: object,
+    x_train: pd.DataFrame,
+    y_train: np.ndarray,
+    x_test: pd.DataFrame,
+    y_test: np.ndarray,
+) -> tuple:
     """
     Evaluate the performance of the given model on training and test data.
 
@@ -129,22 +142,55 @@ def evaluate_model(full_pipeline: object, best_model: object, x_train: pd.DataFr
     # log test performance to MLflow
     mlflow.log_metric("test_r2", test_r2)
     mlflow.log_metric("test_rmse", test_rmse)
-    return  train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, train_predictions, test_predictions
+    return (
+        train_rmse,
+        train_rmse_sd,
+        test_rmse,
+        train_r2,
+        train_r2_sd,
+        test_r2,
+        train_predictions,
+        test_predictions,
+    )
 
 
-def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluation_model: str, final_model: str, full_pipeline: object, 
-                                        model_name: str, best_params: dict, target_var: str, target_df: pd.DataFrame, id_col: str, original_df: pd.DataFrame,
-                                        x_train: pd.DataFrame, y_train: np.ndarray, x_test: pd.DataFrame, y_test: np.ndarray, 
-                                        train_predictions: np.ndarray, test_predictions: np.ndarray, train_rmse: float, train_rmse_sd: float, 
-                                        test_rmse: float, train_r2: float, train_r2_sd: float, test_r2: float, 
-                                        output_label: str = "", output_path: str = "",col_label_map: dict={}, pd_y_label: str = "", 
-                                        shap_plots: bool=False, shap_id_keys: list=[], index_mapping: dict={}) -> None:
+def output_evaluation_metrics_and_plots(
+    user_evaluation_model: str,
+    best_evaluation_model: str,
+    final_model: str,
+    full_pipeline: object,
+    model_name: str,
+    best_params: dict,
+    target_var: str,
+    target_df: pd.DataFrame,
+    id_col: str,
+    original_df: pd.DataFrame,
+    x_train: pd.DataFrame,
+    y_train: np.ndarray,
+    x_test: pd.DataFrame,
+    y_test: np.ndarray,
+    train_predictions: np.ndarray,
+    test_predictions: np.ndarray,
+    train_rmse: float,
+    train_rmse_sd: float,
+    test_rmse: float,
+    train_r2: float,
+    train_r2_sd: float,
+    test_r2: float,
+    output_label: str = "",
+    output_path: str = "",
+    col_label_map: dict = {},
+    pd_y_label: str = "",
+    shap_plots: bool = False,
+    shap_id_keys: list = [],
+    index_mapping: dict = {},
+) -> None:
     """
     Output evaluation metrics and create plots for the regression model.
 
     Parameters:
 
-    - user_evaluation_model (str): User defined model to use when creating evaluation plots. 
+    - user_evaluation_model (str): User defined model to use when creating evaluation plots.
       If not defined, evaluation plots will be created for the best performing model.
     - best_evaluation_model (str): best performing model so far.
     - final_model (str): final model in model dictionary.
@@ -177,31 +223,32 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
 
     Returns: None
     """
-   #create an empty csv for the results
+    # create an empty csv for the results
     filename = f"{output_path}/{output_label}_regression_model_summary.csv"
     if os.path.isfile(filename):
         all_models_evaluation_df = pd.read_csv(filename)
     else:
         all_models_evaluation_df = pd.DataFrame()
-    # remove feature list hyperparameter from output 
+    # remove feature list hyperparameter from output
     try:
-        del best_params['feature_filter__feature_filter_list']
+        del best_params["feature_filter__feature_filter_list"]
     except KeyError:
         pass
-        
-    model_evaluation_dict = {"time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
-                            "model": model_name,
-                            "params": str(best_params),
-                            "target_variable": target_var,
-                            "target_mean": target_df.mean(),
-                            "train_RMSE": train_rmse.round(2),  
-                            "train_RMSE_sd": train_rmse_sd.round(3),     
-                            "test_RMSE": test_rmse.round(2),
-                            "test_RMSE_perc_mean": (test_rmse / target_df.mean()).round(2),
-                            "train_R^2": train_r2.round(2),
-                            "train_R^2_sd": train_r2_sd.round(2),
-                            "test_R^2": round(test_r2, 2)
-                            }
+
+    model_evaluation_dict = {
+        "time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+        "model": model_name,
+        "params": str(best_params),
+        "target_variable": target_var,
+        "target_mean": target_df.mean(),
+        "train_RMSE": train_rmse.round(2),
+        "train_RMSE_sd": train_rmse_sd.round(3),
+        "test_RMSE": test_rmse.round(2),
+        "test_RMSE_perc_mean": (test_rmse / target_df.mean()).round(2),
+        "train_R^2": train_r2.round(2),
+        "train_R^2_sd": train_r2_sd.round(2),
+        "test_R^2": round(test_r2, 2),
+    }
     model_evaluation_df = pd.DataFrame([model_evaluation_dict])
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
     output.drop_duplicates().to_csv(filename, index=False)
@@ -209,7 +256,24 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
     feature_importance_model = full_pipeline.best_estimator_.named_steps["model"]
     if model_name == user_evaluation_model:
         print("Creating evaluation plots")
-        create_model_evaluation_plots(full_pipeline, feature_importance_model, target_var, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
+        create_model_evaluation_plots(
+            full_pipeline,
+            feature_importance_model,
+            target_var,
+            x_train,
+            y_train,
+            x_test,
+            y_test,
+            train_predictions,
+            test_predictions,
+            output_label,
+            output_path,
+            col_label_map,
+            pd_y_label,
+            shap_plots,
+            shap_id_keys,
+            index_mapping,
+        )
     # if no user defined model then create plots for best performing model
     elif user_evaluation_model == "":
         if model_name == final_model:
@@ -218,14 +282,33 @@ def output_evaluation_metrics_and_plots(user_evaluation_model: str, best_evaluat
             test_predictions = best_evaluation_model.predict(x_test)
             print("The best performing model is: " + str(best_model))
             print("Creating evaluation plots")
-            create_model_evaluation_plots(best_evaluation_model, best_model, target_var, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
+            create_model_evaluation_plots(
+                best_evaluation_model,
+                best_model,
+                target_var,
+                id_col,
+                original_df,
+                x_train,
+                y_train,
+                x_test,
+                y_test,
+                train_predictions,
+                test_predictions,
+                output_label,
+                output_path,
+                col_label_map,
+                pd_y_label,
+                shap_plots,
+                shap_id_keys,
+                index_mapping,
+            )
     return
 
 
-def log_gridsearch_results_to_mlflow(model_name: str, output_label: str="") -> None:
+def log_gridsearch_results_to_mlflow(model_name: str, output_label: str = "") -> None:
     """
     Log all GridSearchCV results and hyperparameters to MLflow.
-    
+
     Parameters:
     - model_name (str): A name to identify the model in the MLflow logs.
     - output_label (str): A label to add to the output files saved.
@@ -234,15 +317,33 @@ def log_gridsearch_results_to_mlflow(model_name: str, output_label: str="") -> N
     if output_label:
         mlflow.set_experiment(output_label)
     # autolog hyperparams and eval metrics
-    mlflow.sklearn.autolog(log_input_examples=True, max_tuning_runs=50, log_post_training_metrics=False,  extra_tags={"model_name": model_name})
+    mlflow.sklearn.autolog(
+        log_input_examples=True,
+        max_tuning_runs=50,
+        log_post_training_metrics=False,
+        extra_tags={"model_name": model_name},
+    )
     return
 
 
-def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: pd.DataFrame, 
-                           id_col: str, original_df: pd.DataFrame, x_train: pd.DataFrame, y_train: np.ndarray, 
-                           x_test: pd.DataFrame, y_test: np.ndarray, output_label: str = "", output_path: str = "",
-                           col_label_map: dict={}, pd_y_label: str = "", user_evaluation_model: str="", 
-                           shap_plots: bool=False, shap_id_keys: list=[]) -> None:
+def model_grid_cv_pipeline(
+    model_param_dict: dict,
+    target_var: str,
+    target_df: pd.DataFrame,
+    id_col: str,
+    original_df: pd.DataFrame,
+    x_train: pd.DataFrame,
+    y_train: np.ndarray,
+    x_test: pd.DataFrame,
+    y_test: np.ndarray,
+    output_label: str = "",
+    output_path: str = "",
+    col_label_map: dict = {},
+    pd_y_label: str = "",
+    user_evaluation_model: str = "",
+    shap_plots: bool = False,
+    shap_id_keys: list = [],
+) -> None:
     """
     Perform a grid search cross-validation for multiple regression models.
 
@@ -260,7 +361,7 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots
     - pd_y_label (str, optional): A label the y axis of the PD plots.
-    - user_evaluation_model (str, optional): User defined model to use when creating evaluation plots. 
+    - user_evaluation_model (str, optional): User defined model to use when creating evaluation plots.
       If not defined, evaluation plots will be created for the best performing model.
     - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
@@ -280,32 +381,38 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
     index_mapping = {}
     # Fill the mapping for train indices
     for idx in train_indices:
-        index_mapping[idx] = ('train', train_indices.get_loc(idx))
+        index_mapping[idx] = ("train", train_indices.get_loc(idx))
 
     # Fill the mapping for test indices
     for idx in test_indices:
-        index_mapping[idx] = ('test', test_indices.get_loc(idx))
+        index_mapping[idx] = ("test", test_indices.get_loc(idx))
 
     for model in model_param_dict.keys():
         model_name = str(model).split("(")[0]
         print(model_name)
 
-        processing_pipeline = Pipeline([
-                ('feature_filter', FilterFeatures()),
-                ('scaler', StandardScaler()),
-                ('selector', VarianceThreshold()),
-                ('model', model)
-            ])
+        processing_pipeline = Pipeline(
+            [
+                ("feature_filter", FilterFeatures()),
+                ("scaler", StandardScaler()),
+                ("selector", VarianceThreshold()),
+                ("model", model),
+            ]
+        )
         # log model parameters and metrics to MLflow
         log_gridsearch_results_to_mlflow(model_name, output_label)
 
         with mlflow.start_run(run_name=output_label + "_" + model_name) as run:
             # defining optimisation criteria here, this could be user defined in future.
-            full_pipeline = GridSearchCV(processing_pipeline, model_param_dict[model], cv=5,
-                                scoring=['neg_root_mean_squared_error', 'r2'],
-                                refit='neg_root_mean_squared_error',
-                                return_train_score=True,
-                                verbose=2)
+            full_pipeline = GridSearchCV(
+                processing_pipeline,
+                model_param_dict[model],
+                cv=5,
+                scoring=["neg_root_mean_squared_error", "r2"],
+                refit="neg_root_mean_squared_error",
+                return_train_score=True,
+                verbose=2,
+            )
 
             full_pipeline.fit(x_train, y_train)
 
@@ -316,12 +423,33 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
             # save best models
             pickle.dump(
                 best_model,
-                open(output_path + "/" + output_label + "_" + model_name + "_" + target_var + ".pickle", "wb"),
+                open(
+                    output_path
+                    + "/"
+                    + output_label
+                    + "_"
+                    + model_name
+                    + "_"
+                    + target_var
+                    + ".pickle",
+                    "wb",
+                ),
             )
 
             # evaluate model
-            train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, train_predictions, test_predictions = evaluate_model(full_pipeline, best_model, x_train, y_train, x_test, y_test)
-        
+            (
+                train_rmse,
+                train_rmse_sd,
+                test_rmse,
+                train_r2,
+                train_r2_sd,
+                test_r2,
+                train_predictions,
+                test_predictions,
+            ) = evaluate_model(
+                full_pipeline, best_model, x_train, y_train, x_test, y_test
+            )
+
         # keep track of best performing model in terms of r2 for eval plots
         if test_r2 > best_r2:
             best_r2 = test_r2
@@ -329,5 +457,35 @@ def model_grid_cv_pipeline(model_param_dict: dict, target_var: str, target_df: p
             # now just input into eval metrics function
 
         # output model results
-        output_evaluation_metrics_and_plots(user_evaluation_model, best_evaluation_model, final_model, full_pipeline, model_name, best_params, target_var, target_df, id_col, original_df, x_train, y_train, x_test, y_test, train_predictions, test_predictions, train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, output_label, output_path, col_label_map, pd_y_label, shap_plots, shap_id_keys, index_mapping)
-    return 
+        output_evaluation_metrics_and_plots(
+            user_evaluation_model,
+            best_evaluation_model,
+            final_model,
+            full_pipeline,
+            model_name,
+            best_params,
+            target_var,
+            target_df,
+            id_col,
+            original_df,
+            x_train,
+            y_train,
+            x_test,
+            y_test,
+            train_predictions,
+            test_predictions,
+            train_rmse,
+            train_rmse_sd,
+            test_rmse,
+            train_r2,
+            train_r2_sd,
+            test_r2,
+            output_label,
+            output_path,
+            col_label_map,
+            pd_y_label,
+            shap_plots,
+            shap_id_keys,
+            index_mapping,
+        )
+    return
