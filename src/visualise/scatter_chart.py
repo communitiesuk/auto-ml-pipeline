@@ -1,5 +1,5 @@
 import pandas as pd
-import plotly.graph_objects as go 
+import plotly.graph_objects as go
 import plotly.express as px
 import matplotlib.pyplot as plt
 
@@ -27,20 +27,32 @@ def apply_standard_graph_styling(fig: go.Figure) -> None:
     fig.update_layout(margin=dict(pad=20))
 
 
-def scatter_chart(data: pd.DataFrame, x_var: str, y_var: str, hover_labels, x_label: str, y_label: str, colour_col: str=None, title: str="", trend_line: str='ols', multi_trends: bool=True, color_scale: list=diverging_colour_scale) -> go.Figure:
+def scatter_chart(
+    data: pd.DataFrame,
+    x_var: str,
+    y_var: str,
+    hover_labels,
+    x_label: str,
+    y_label: str,
+    colour_col: str = None,
+    title: str = "",
+    trend_line: str = "ols",
+    multi_trends: bool = True,
+    color_scale: list = diverging_colour_scale,
+) -> go.Figure:
     if not multi_trends:
-        trend_scope="Overall"
-        trend_col=color_scale[0]
+        trend_scope = "Overall"
+        trend_col = color_scale[0]
     else:
-        trend_scope="trace"
-        trend_col=None
+        trend_scope = "trace"
+        trend_col = None
     fig = px.scatter(
         data_frame=data,
         x=x_var,
-        y=y_var, 
-        color=colour_col, 
+        y=y_var,
+        color=colour_col,
         color_discrete_sequence=color_scale,
-        hover_data=[hover_labels], 
+        hover_data=[hover_labels],
         trendline=trend_line,
         trendline_scope=trend_scope,
         trendline_color_override=trend_col,
@@ -48,8 +60,8 @@ def scatter_chart(data: pd.DataFrame, x_var: str, y_var: str, hover_labels, x_la
         labels={
             x_var: x_label,
             y_var: y_label,
-        })
-        
+        },
+    )
+
     apply_standard_graph_styling(fig)
     return fig
-
