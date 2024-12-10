@@ -13,7 +13,8 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
-from sklearn.neural_network import MLPRegressor
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 from src.modelling.pipeline.ml_pipeline import (
@@ -92,6 +93,12 @@ user_model = ""
 # shortened feature name label for evaluation plots
 col_labels = {}
 
+# custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler(), VarianceThreshold()
+pre_processing_pipeline_steps = [
+                                ("scaler", MinMaxScaler()),
+                                ("pca_decomposition", PCA(n_components=10)),
+                                ]
+
 # run pipeline for all models
 for target_var in target_var_list:
     # pre-processing
@@ -121,4 +128,5 @@ for target_var in target_var_list:
         user_evaluation_model=user_model,
         shap_plots=True,
         shap_id_keys=["E01000001", "E01001328"],
+        custom_pre_processing_steps=pre_processing_pipeline_steps
     )
