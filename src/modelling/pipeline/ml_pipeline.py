@@ -404,7 +404,6 @@ def model_grid_cv_pipeline(
                 [
                     ("feature_filter", FilterFeatures()),
                     ("scaler", StandardScaler()),
-                    ("selector", VarianceThreshold()),
                     ("model", model),
                 ]
             )
