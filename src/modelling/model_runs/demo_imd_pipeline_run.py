@@ -60,8 +60,7 @@ select_features_list = []
 
 # model dictionary and hyperparameter search space
 model_param_dict = {
-    LinearRegression(): {
-    },
+    LinearRegression(): {},
     Lasso(): {
         "model__fit_intercept": [True, False],
         "model__alpha": [0.001, 0.01, 0.1, 0.5, 1],
@@ -90,8 +89,8 @@ col_labels = {}
 
 # custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler()
 pre_processing_pipeline_steps = [
-                                ("scaler", MinMaxScaler()),
-                                ]
+    ("scaler", MinMaxScaler()),
+]
 
 # run pipeline for all models
 for target_var in target_var_list:
@@ -122,5 +121,5 @@ for target_var in target_var_list:
         user_evaluation_model=user_model,
         shap_plots=True,
         shap_id_keys=["E01000001", "E01001328"],
-        custom_pre_processing_steps=pre_processing_pipeline_steps
+        custom_pre_processing_steps=pre_processing_pipeline_steps,
     )

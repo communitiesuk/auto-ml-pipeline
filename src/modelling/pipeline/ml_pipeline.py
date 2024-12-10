@@ -392,7 +392,7 @@ def model_grid_cv_pipeline(
 
     for model in model_param_dict.keys():
         model_name = str(model).split("(")[0]
-        print(model_name)   
+        print(model_name)
 
         # apply custom pre_processing steps, else use default processing pipeline
         if custom_pre_processing_steps:
@@ -408,7 +408,7 @@ def model_grid_cv_pipeline(
                     ("model", model),
                 ]
             )
-            
+
         # log model parameters and metrics to MLflow
         log_gridsearch_results_to_mlflow(model_name, output_label)
 
