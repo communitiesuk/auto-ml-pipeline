@@ -396,10 +396,9 @@ def model_grid_cv_pipeline(
 
         # apply custom pre_processing steps, else use default processing pipeline
         if custom_pre_processing_steps:
-            processing_pipeline = Pipeline(
-                custom_pre_processing_steps.append(("model", model))
-                
-            )
+            steps = custom_pre_processing_steps.copy()
+            steps.append(("model", model))
+            processing_pipeline = Pipeline(steps)
         else:
             processing_pipeline = Pipeline(
                 [
@@ -409,6 +408,7 @@ def model_grid_cv_pipeline(
                     ("model", model),
                 ]
             )
+            
         # log model parameters and metrics to MLflow
         log_gridsearch_results_to_mlflow(model_name, output_label)
 
