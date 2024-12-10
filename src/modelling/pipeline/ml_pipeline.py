@@ -343,6 +343,7 @@ def model_grid_cv_pipeline(
     user_evaluation_model: str = "",
     shap_plots: bool = False,
     shap_id_keys: list = [],
+    custom_pre_processing_steps: list = [],
 ) -> None:
     """
     Perform a grid search cross-validation for multiple regression models.
@@ -365,6 +366,8 @@ def model_grid_cv_pipeline(
       If not defined, evaluation plots will be created for the best performing model.
     - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
+    - custom_pre_processing_steps (list, optional): List for rows to create shap plots for.
+
 
     Returns: None
     """
@@ -389,16 +392,23 @@ def model_grid_cv_pipeline(
 
     for model in model_param_dict.keys():
         model_name = str(model).split("(")[0]
-        print(model_name)
+        print(model_name)   
 
-        processing_pipeline = Pipeline(
-            [
-                ("feature_filter", FilterFeatures()),
-                ("scaler", StandardScaler()),
-                ("selector", VarianceThreshold()),
-                ("model", model),
-            ]
-        )
+        # apply custom pre_processing steps, else use default processing pipeline
+        if custom_pre_processing_steps:
+            processing_pipeline = Pipeline(
+                custom_pre_processing_steps.append(("model", model))
+                
+            )
+        else:
+            processing_pipeline = Pipeline(
+                [
+                    ("feature_filter", FilterFeatures()),
+                    ("scaler", StandardScaler()),
+                    ("selector", VarianceThreshold()),
+                    ("model", model),
+                ]
+            )
         # log model parameters and metrics to MLflow
         log_gridsearch_results_to_mlflow(model_name, output_label)
 
