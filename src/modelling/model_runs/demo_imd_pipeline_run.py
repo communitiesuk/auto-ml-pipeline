@@ -19,6 +19,7 @@ from sklearn.model_selection import train_test_split
 from src.modelling.pipeline.ml_pipeline import (
     preprocess_features,
     preprocess_target,
+    FilterFeatures,
     model_grid_cv_pipeline,
 )
 
@@ -89,6 +90,7 @@ col_labels = {}
 
 # custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler()
 pre_processing_pipeline_steps = [
+    ("feature_filter", FilterFeatures()),
     ("scaler", MinMaxScaler()),
 ]
 
