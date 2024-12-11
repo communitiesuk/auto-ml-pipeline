@@ -18,7 +18,7 @@ The pipeline is implemented using the scikit-learn library.
     + [Run the pipeline](#run-the-pipeline)
     + [Interpretation of results](#interpretation-of-results)
     + [Automatic logging with MLflow](#automatic-logging-with-mlflow)
-  * [Optional steps: select features, custom pre-processing steps, and shortened labels for evaluation plots](#optional-steps--select-features--custom-pre-processing-steps--and-shortened-labels-for-evaluation-plots)
+  * [Optional steps](#optional-steps)
     + [Select specific features](#select-specific-features)
     + [Provide custom pre-processing steps](#provide-custom-pre-processing-steps)
     + [Create tidy variable labels](#create-tidy-variable-labels)
@@ -143,7 +143,7 @@ The model runs will be sorted into experiments based on the specified output_lab
 
 See the [MLflow docs](https://mlflow.org/docs/latest/index.html) for more details.
 
-## Optional steps: select features, custom pre-processing steps, and shortened labels for evaluation plots
+## Optional steps
 
 ### Select specific features
 
