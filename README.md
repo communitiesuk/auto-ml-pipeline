@@ -8,6 +8,7 @@ The pipeline is implemented using the scikit-learn library.
 
 ## Contents 
 
+  * [Contents](#contents)
   * [First time setup](#first-time-setup)
     + [Installing the virtual environment](#installing-the-virtual-environment)
   * [Running pipeline with new data](#running-pipeline-with-new-data)
@@ -16,7 +17,11 @@ The pipeline is implemented using the scikit-learn library.
     + [Model configuration](#model-configuration)
     + [Run the pipeline](#run-the-pipeline)
     + [Interpretation of results](#interpretation-of-results)
-
+    + [Automatic logging with MLflow](#automatic-logging-with-mlflow)
+  * [Optional steps: select features, custom pre-processing steps, and shortened labels for evaluation plots](#optional-steps--select-features--custom-pre-processing-steps--and-shortened-labels-for-evaluation-plots)
+    + [Select specific features](#select-specific-features)
+    + [Provide custom pre-processing steps](#provide-custom-pre-processing-steps)
+    + [Create tidy variable labels](#create-tidy-variable-labels)
 ## First time setup
 ### Installing the virtual environment
 
