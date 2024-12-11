@@ -169,6 +169,7 @@ You can add custom pre-processing steps to the pipeline using the pre_processing
 # custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler()
 pre_processing_pipeline_steps = [
     ("feature_filter", FilterFeatures()),
+    ("knn_imputer", KNNImputer()),
     ("scaler", MinMaxScaler()),
 ]
 ```

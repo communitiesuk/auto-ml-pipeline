@@ -14,6 +14,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.impute import KNNImputer
 from sklearn.model_selection import train_test_split
 
 from src.modelling.pipeline.ml_pipeline import (
@@ -43,8 +44,7 @@ ldc_density_metrics = pd.merge(
     left_on="lsoa11cd",
     right_on="LSOA code (2011)",
 )
-# drop remaining nans
-ldc_density_metrics = ldc_density_metrics.dropna()
+
 # take sample to speed up run time
 ldc_density_metrics = ldc_density_metrics.head(1000)
 
@@ -91,6 +91,7 @@ col_labels = {}
 # custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler()
 pre_processing_pipeline_steps = [
     ("feature_filter", FilterFeatures()),
+    ("knn_imputer", KNNImputer()),
     ("scaler", MinMaxScaler()),
 ]
 
@@ -117,7 +118,7 @@ for target_var in target_var_list:
         x_test=x_test,
         y_test=y_test,
         output_path="Q:/SDU/LDC/modelling/outputs",
-        output_label="custom_pipeline_test",
+        output_label="custom_pipeline_imputer_test",
         col_label_map=col_labels,
         pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
