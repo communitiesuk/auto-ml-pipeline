@@ -138,7 +138,9 @@ The model runs will be sorted into experiments based on the specified output_lab
 
 See the [MLflow docs](https://mlflow.org/docs/latest/index.html) for more details.
 
-### Optional steps: select features, custom pre-processing steps, and shortened labels for evaluation plots
+## Optional steps: select features, custom pre-processing steps, and shortened labels for evaluation plots
+
+### Select specific features
 
 You can create a list of features to filter the input data as a hyperparameter step which can be used to see if a smaller subset of features improves model performance. 
 
@@ -153,6 +155,8 @@ model_param_dict = {
     }
 }
 ```
+### Provide custom pre-processing steps
+
 You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from Scikit learn. If this variable is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
 
 ```python
@@ -164,14 +168,16 @@ pre_processing_pipeline_steps = [
 ]
 ```
 
+### Create tidy variable labels
+
 The col_labels dictionary can be used to create cleaner or shorter variable names for use in the evaluation plots.
 
 ```python
 
 
 col_labels = {
-    "feature1": "Short label 1",
-    "feature2": "Short label 2",
-    "feature3": "Short label 3"
+    "long feature label 1": "Short label 1",
+    "long feature label 2": "Short label 2",
+    "long feature label 3": "Short label 3"
 }
 ```
