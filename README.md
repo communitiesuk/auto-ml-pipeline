@@ -29,7 +29,7 @@ conda env create --file environment.yml
 And then activate the virtual environment by running:
 
 ```
-conda activate rti
+conda activate auto-ml
 ```
 
 ## Running pipeline with new data
