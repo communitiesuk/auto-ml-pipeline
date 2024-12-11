@@ -366,7 +366,7 @@ def model_grid_cv_pipeline(
       If not defined, evaluation plots will be created for the best performing model.
     - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
-    - custom_pre_processing_steps (list, optional): List for rows to create shap plots for.
+    - custom_pre_processing_steps (list, optional): List of user provided steps for custom pre-processing pipeline
 
 
     Returns: None
