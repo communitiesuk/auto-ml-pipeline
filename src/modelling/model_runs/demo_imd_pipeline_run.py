@@ -8,6 +8,7 @@ import sys
 sys.path.append(repo.working_tree_dir)
 
 import pandas as pd
+from scipy.stats import uniform, loguniform, randint
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
@@ -46,7 +47,7 @@ ldc_density_metrics = pd.merge(
 )
 
 # take sample to speed up run time
-ldc_density_metrics = ldc_density_metrics.head(1000)
+ldc_density_metrics = ldc_density_metrics.head(5000)
 
 # drop any unecessary variables to  from model
 drop_variables = []
@@ -64,20 +65,20 @@ model_param_dict = {
     LinearRegression(): {},
     Lasso(): {
         "model__fit_intercept": [True, False],
-        "model__alpha": [0.001, 0.01, 0.1, 0.5, 1],
+        "model__alpha": loguniform(1e-4, 1), 
     },
     RandomForestRegressor(): {
-        "model__max_depth": [None, 25, 50],
+        "model__max_depth": randint(1, 100),
         "model__max_features": [1, 0.5, "sqrt"],
-        "model__min_samples_leaf": [1, 4, 10],
-        "model__min_samples_split": [2, 5, 10],
-        "model__n_estimators": [10, 50, 200],
+        "model__min_samples_leaf": randint(1, 20),
+        "model__min_samples_split": randint(2, 20),
+        "model__n_estimators": randint(5, 300),
     },
     XGBRegressor(): {
-        "model__max_depth": [2, 3, 5, 10],
-        "model__learning_rate": [0.1, 0.01, 0.001],
-        "model__subsample": [0.5, 0.7, 1],
-        "model__n_estimators": [10, 50, 100, 500, 2000],
+        "model__max_depth": randint(2, 20),
+        "model__learning_rate": loguniform(1e-4, 0.1),
+        "model__subsample": uniform(0.3, 0.7),
+        "model__n_estimators": randint(5, 2000),
     },
 }
 
