@@ -13,12 +13,14 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
-from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.impute import KNNImputer
 from sklearn.model_selection import train_test_split
 
 from src.modelling.pipeline.ml_pipeline import (
     preprocess_features,
     preprocess_target,
+    FilterFeatures,
     model_grid_cv_pipeline,
 )
 
@@ -42,8 +44,7 @@ ldc_density_metrics = pd.merge(
     left_on="lsoa11cd",
     right_on="LSOA code (2011)",
 )
-# drop remaining nans
-ldc_density_metrics = ldc_density_metrics.dropna()
+
 # take sample to speed up run time
 ldc_density_metrics = ldc_density_metrics.head(1000)
 
@@ -60,10 +61,7 @@ select_features_list = []
 
 # model dictionary and hyperparameter search space
 model_param_dict = {
-    LinearRegression(): {
-        "feature_filter__filter_features": [False],
-        "feature_filter__feature_filter_list": [select_features_list],
-    },
+    LinearRegression(): {},
     Lasso(): {
         "model__fit_intercept": [True, False],
         "model__alpha": [0.001, 0.01, 0.1, 0.5, 1],
@@ -80,8 +78,6 @@ model_param_dict = {
         "model__learning_rate": [0.1, 0.01, 0.001],
         "model__subsample": [0.5, 0.7, 1],
         "model__n_estimators": [10, 50, 100, 500, 2000],
-        "feature_filter__filter_features": [False],
-        "feature_filter__feature_filter_list": [select_features_list],
     },
 }
 
@@ -91,6 +87,13 @@ user_model = ""
 
 # shortened feature name label for evaluation plots
 col_labels = {}
+
+# custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler()
+pre_processing_pipeline_steps = [
+    ("feature_filter", FilterFeatures()),
+    ("knn_imputer", KNNImputer()),
+    ("scaler", MinMaxScaler()),
+]
 
 # run pipeline for all models
 for target_var in target_var_list:
@@ -115,10 +118,11 @@ for target_var in target_var_list:
         x_test=x_test,
         y_test=y_test,
         output_path="Q:/SDU/LDC/modelling/outputs",
-        output_label="autolog_test",
+        output_label="custom_pipeline_imputer_test",
         col_label_map=col_labels,
         pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
         shap_plots=True,
         shap_id_keys=["E01000001", "E01001328"],
+        custom_pre_processing_steps=pre_processing_pipeline_steps,
     )

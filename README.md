@@ -8,6 +8,7 @@ The pipeline is implemented using the scikit-learn library.
 
 ## Contents 
 
+  * [Contents](#contents)
   * [First time setup](#first-time-setup)
     + [Installing the virtual environment](#installing-the-virtual-environment)
   * [Running pipeline with new data](#running-pipeline-with-new-data)
@@ -16,7 +17,11 @@ The pipeline is implemented using the scikit-learn library.
     + [Model configuration](#model-configuration)
     + [Run the pipeline](#run-the-pipeline)
     + [Interpretation of results](#interpretation-of-results)
-
+    + [Automatic logging with MLflow](#automatic-logging-with-mlflow)
+  * [Optional steps](#optional-steps)
+    + [Select specific features](#select-specific-features)
+    + [Provide custom pre-processing steps](#provide-custom-pre-processing-steps)
+    + [Create tidy variable labels](#create-tidy-variable-labels)
 ## First time setup
 ### Installing the virtual environment
 
@@ -29,7 +34,7 @@ conda env create --file environment.yml
 And then activate the virtual environment by running:
 
 ```
-conda activate rti
+conda activate auto-ml
 ```
 
 ## Running pipeline with new data
@@ -138,18 +143,47 @@ The model runs will be sorted into experiments based on the specified output_lab
 
 See the [MLflow docs](https://mlflow.org/docs/latest/index.html) for more details.
 
-### Optional steps: select features and shortened labels for evaluation plots
+## Optional steps
+
+### Select specific features
 
 You can create a list of features to filter the input data as a hyperparameter step which can be used to see if a smaller subset of features improves model performance. 
-
-The col_labels dictionary can be used to create cleaner or shorter variable names for use in the evaluation plots.
 
 ```python
 select_features_list = ["feature1", "feature2", "feature3"]
 
+# add hyperparams to model_param_dict
+model_param_dict = {
+    LinearRegression(): {
+        "feature_filter__filter_features": True,
+        "feature_filter__feature_filter_list": select_features_list
+    }
+}
+```
+### Provide custom pre-processing steps
+
+You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from Scikit learn. If this variable is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
+
+```python
+
+# custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler()
+pre_processing_pipeline_steps = [
+    ("feature_filter", FilterFeatures()),
+    ("knn_imputer", KNNImputer()),
+    ("scaler", MinMaxScaler()),
+]
+```
+
+### Create tidy variable labels
+
+The col_labels dictionary can be used to create cleaner or shorter variable names for use in the evaluation plots.
+
+```python
+
+
 col_labels = {
-    "feature1": "Short label 1",
-    "feature2": "Short label 2",
-    "feature3": "Short label 3"
+    "long feature label 1": "Short label 1",
+    "long feature label 2": "Short label 2",
+    "long feature label 3": "Short label 3"
 }
 ```
