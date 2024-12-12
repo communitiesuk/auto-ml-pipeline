@@ -60,6 +60,21 @@ target_var_list = ["Index of Multiple Deprivation (IMD) Score"]
 # Change feature_filter__filter_features hyperparm when usings, see linear regression model param dictionary for implementation
 select_features_list = []
 
+def float_to_int(rvs):
+    def rvs_wrapper(*args, **kwargs):
+        return rvs(*args, **kwargs).round().astype(int)
+    return rvs_wrapper
+
+def int_loguniform(low, high):
+    #Create a loguniform object
+    lu = loguniform(low, high)
+
+    #Wrap its rvs() with float-to-int
+    lu.rvs = float_to_int(lu.rvs)
+
+    #Return modified loguniform object
+    return lu
+
 # model dictionary and hyperparameter search space
 model_param_dict = {
     LinearRegression(): {},
@@ -72,13 +87,13 @@ model_param_dict = {
         "model__max_features": [1, 0.5, "sqrt"],
         "model__min_samples_leaf": randint(1, 20),
         "model__min_samples_split": randint(2, 20),
-        "model__n_estimators": randint(5, 300),
+        "model__n_estimators": int_loguniform(5, 300),
     },
     XGBRegressor(): {
         "model__max_depth": randint(2, 20),
         "model__learning_rate": loguniform(1e-4, 0.1),
         "model__subsample": uniform(0.3, 0.7),
-        "model__n_estimators": randint(5, 2000),
+        "model__n_estimators": int_loguniform(5, 2000),
     },
 }
 
