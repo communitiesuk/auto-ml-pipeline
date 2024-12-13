@@ -1,3 +1,4 @@
+from weakref import ref
 import git
 from typing import Any
 import os
@@ -17,12 +18,12 @@ import numpy as np
 import mlflow
 import mlflow.sklearn
 from joblib import effective_n_jobs
+from skopt import BayesSearchCV
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold  # Feature selector
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import RandomizedSearchCV
 from sklearn import set_config
 
 from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
@@ -416,10 +417,10 @@ def model_grid_cv_pipeline(
 
         with mlflow.start_run(run_name=output_label + "_" + model_name) as run:
             # defining optimisation criteria here, this could be user defined in future.
-            full_pipeline = RandomizedSearchCV(
+            full_pipeline = BayesSearchCV(
                 processing_pipeline,
                 model_param_dict[model],
-                n_iter=100,
+                n_iter=20,
                 cv=5,
                 scoring=["neg_root_mean_squared_error", "r2"],
                 refit="neg_root_mean_squared_error",

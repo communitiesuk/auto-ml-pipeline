@@ -5,7 +5,7 @@ os.chdir(repo.working_tree_dir)
 import sys
 sys.path.append(repo.working_tree_dir)
 import pandas as pd
-from scipy.stats import uniform, loguniform, randint
+from skopt.space import Real, Categorical, Integer
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.svm import SVR 
 from sklearn.tree import DecisionTreeRegressor
@@ -60,25 +60,28 @@ def cut_off_model_run(cut_off):
         #Return modified loguniform object
         return lu
 
+
     # model dictionary and hyperparameter search space
     model_param_dict = {
-        LinearRegression(): {},
+#        LinearRegression(): {
+#            "model__fit_intercept": Categorical([True, False])
+#        },
         Lasso(): {
-            "model__fit_intercept": [True, False],
-            "model__alpha": loguniform(1e-4, 1), 
+            "model__fit_intercept": Categorical([True, False]),
+            "model__alpha": Real(1e-4, 1e+1, prior='log-uniform') 
         },
         RandomForestRegressor(): {
-            "model__max_depth": randint(1, 100),
-            "model__max_features": [1, 0.5, "sqrt"],
-            "model__min_samples_leaf": randint(1, 20),
-            "model__min_samples_split": randint(2, 20),
-            "model__n_estimators": int_loguniform(5, 300),
+            "model__max_depth": Integer(1, 100, prior='uniform'),
+            "model__max_features": Real(0.1, 1, prior="uniform"),
+            "model__min_samples_leaf": Integer(1, 20, prior='uniform'),
+            "model__min_samples_split": Integer(2, 20, prior='uniform'),
+            "model__n_estimators": Integer(5, 500, prior='uniform') 
         },
         XGBRegressor(): {
-            "model__max_depth": randint(2, 20),
-            "model__learning_rate": loguniform(1e-4, 0.1),
-            "model__subsample": uniform(0.3, 0.7),
-            "model__n_estimators": int_loguniform(5, 3000),
+            "model__max_depth": Integer(2, 20, prior='uniform'),
+            "model__learning_rate": Real(1e-4, 1, prior='log-uniform') ,
+            "model__subsample": Real(0.1, 1, prior="uniform"),
+            "model__n_estimators": Integer(5, 3000, prior='uniform'),
         },
     }
     # optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
