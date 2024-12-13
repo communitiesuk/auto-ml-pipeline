@@ -419,7 +419,7 @@ def model_grid_cv_pipeline(
             full_pipeline = RandomizedSearchCV(
                 processing_pipeline,
                 model_param_dict[model],
-                n_iter=50,
+                n_iter=100,
                 cv=5,
                 scoring=["neg_root_mean_squared_error", "r2"],
                 refit="neg_root_mean_squared_error",
