@@ -11,9 +11,10 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
-from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
 from src.modelling.pipeline.ml_pipeline import preprocess_features, preprocess_target, model_grid_cv_pipeline
+
+
 # run model for specificed cutoff value of premises
 def cut_off_model_run(cut_off):
     # read in data
@@ -62,27 +63,26 @@ def cut_off_model_run(cut_off):
 
 
     # model dictionary and hyperparameter search space
-    model_param_dict = {
-#        LinearRegression(): {
-#            "model__fit_intercept": Categorical([True, False])
-#        },
+    model_param_dict = { 
+        LinearRegression(): {
+            },
         Lasso(): {
-            "model__fit_intercept": Categorical([True, False]),
-            "model__alpha": Real(1e-4, 1e+1, prior='log-uniform') 
-        },
+            'model__fit_intercept': [True, False],
+            'model__alpha': [0.001, 0.01, 0.1, 0.5, 1],
+            },
         RandomForestRegressor(): {
-            "model__max_depth": Integer(1, 100, prior='uniform'),
-            "model__max_features": Real(0.1, 1, prior="uniform"),
-            "model__min_samples_leaf": Integer(1, 20, prior='uniform'),
-            "model__min_samples_split": Integer(2, 20, prior='uniform'),
-            "model__n_estimators": Integer(5, 500, prior='uniform') 
-        },
-        XGBRegressor(): {
-            "model__max_depth": Integer(2, 20, prior='uniform'),
-            "model__learning_rate": Real(1e-4, 1, prior='log-uniform') ,
-            "model__subsample": Real(0.1, 1, prior="uniform"),
-            "model__n_estimators": Integer(5, 3000, prior='uniform'),
-        },
+            'model__max_depth': [None, 5, 25, 50],
+            'model__max_features': [1, 0.5, 'sqrt', 'log2'],
+            'model__min_samples_leaf': [1, 2, 4, 10],
+            'model__min_samples_split': [2, 5, 10],
+            'model__n_estimators': [5, 30, 100, 200],
+            },
+        XGBRegressor():{
+            'model__max_depth': [2, 3, 5, 10],
+            'model__learning_rate': [0.1, 0.01, 0.001],
+            'model__subsample': [0.5, 0.7, 1],
+            'model__n_estimators':[10, 50, 100, 500, 2000],
+            }
     }
     # optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
     # if left blank out the best performing model will be used for the evaluation plots
