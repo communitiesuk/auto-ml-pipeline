@@ -1,13 +1,13 @@
-from typing import Any
 import git
 import os
 import pickle
 import datetime
-
-repo = git.Repo(".", search_parent_directories=True)
-os.chdir(repo.working_tree_dir)
 import sys
 
+
+# setting path for those using Spyder
+repo = git.Repo(".", search_parent_directories=True)
+os.chdir(repo.working_tree_dir)
 sys.path.append(repo.working_tree_dir)
 
 
@@ -15,20 +15,18 @@ import pandas as pd
 import numpy as np
 import mlflow
 import mlflow.sklearn
+from joblib import effective_n_jobs
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import VarianceThreshold  # Feature selector
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn import set_config
 
 from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
 
-
-from sklearn import set_config
-
+# set config to track feature names after transformations
 set_config(transform_output="pandas")
-
 
 # Define preprocessing functions
 def preprocess_target(df: pd.DataFrame, target_col: str) -> np.ndarray:
@@ -234,7 +232,6 @@ def output_evaluation_metrics_and_plots(
         del best_params["feature_filter__feature_filter_list"]
     except KeyError:
         pass
-
     model_evaluation_dict = {
         "time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
         "model": model_name,
@@ -305,9 +302,9 @@ def output_evaluation_metrics_and_plots(
     return
 
 
-def log_gridsearch_results_to_mlflow(model_name: str, output_label: str = "") -> None:
+def log_results_to_mlflow(model_name: str, output_label: str = "") -> None:
     """
-    Log all GridSearchCV results and hyperparameters to MLflow.
+    Log all randomised search cv results and hyperparameters to MLflow.
 
     Parameters:
     - model_name (str): A name to identify the model in the MLflow logs.
@@ -326,7 +323,7 @@ def log_gridsearch_results_to_mlflow(model_name: str, output_label: str = "") ->
     return
 
 
-def model_grid_cv_pipeline(
+def model_pipeline(
     model_param_dict: dict,
     target_var: str,
     target_df: pd.DataFrame,
@@ -346,7 +343,7 @@ def model_grid_cv_pipeline(
     custom_pre_processing_steps: list = [],
 ) -> None:
     """
-    Perform a grid search cross-validation for multiple regression models.
+    Perform randomised search cross-validation for multiple regression models.
 
     Parameters:
     - model_param_dict (dict): Dictionary containing regression models and their hyperparameter grids.
@@ -370,7 +367,10 @@ def model_grid_cv_pipeline(
 
 
     Returns: None
-    """
+    """ 
+    # print number of cores available for parallel processing
+    print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
+
 
     # initialise evaluation metric checker to track best performing model
     best_r2 = -100
@@ -393,7 +393,7 @@ def model_grid_cv_pipeline(
     for model in model_param_dict.keys():
         model_name = str(model).split("(")[0]
         print(model_name)
-
+        
         # apply custom pre_processing steps, else use default processing pipeline
         if custom_pre_processing_steps:
             steps = custom_pre_processing_steps.copy()
@@ -409,18 +409,20 @@ def model_grid_cv_pipeline(
             )
 
         # log model parameters and metrics to MLflow
-        log_gridsearch_results_to_mlflow(model_name, output_label)
+        log_results_to_mlflow(model_name, output_label)
 
         with mlflow.start_run(run_name=output_label + "_" + model_name) as run:
             # defining optimisation criteria here, this could be user defined in future.
-            full_pipeline = GridSearchCV(
+            full_pipeline = RandomizedSearchCV(
                 processing_pipeline,
                 model_param_dict[model],
                 cv=5,
+                n_iter=150,
                 scoring=["neg_root_mean_squared_error", "r2"],
                 refit="neg_root_mean_squared_error",
                 return_train_score=True,
                 verbose=2,
+                n_jobs=-1,
             )
 
             full_pipeline.fit(x_train, y_train)

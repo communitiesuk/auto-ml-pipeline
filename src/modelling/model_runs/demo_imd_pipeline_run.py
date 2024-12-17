@@ -8,20 +8,20 @@ import sys
 sys.path.append(repo.working_tree_dir)
 
 import pandas as pd
+from scipy.stats import uniform, loguniform, randint
 from sklearn.linear_model import LinearRegression, Lasso
-from sklearn.svm import SVR
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.impute import KNNImputer
 from sklearn.model_selection import train_test_split
 
+from src.utils.utils import int_loguniform
 from src.modelling.pipeline.ml_pipeline import (
     preprocess_features,
     preprocess_target,
     FilterFeatures,
-    model_grid_cv_pipeline,
+    model_pipeline,
 )
 
 
@@ -46,7 +46,7 @@ ldc_density_metrics = pd.merge(
 )
 
 # take sample to speed up run time
-ldc_density_metrics = ldc_density_metrics.head(1000)
+ldc_density_metrics = ldc_density_metrics.head(5000)
 
 # drop any unecessary variables to  from model
 drop_variables = []
@@ -61,25 +61,25 @@ select_features_list = []
 
 # model dictionary and hyperparameter search space
 model_param_dict = {
-    LinearRegression(): {},
-    Lasso(): {
-        "model__fit_intercept": [True, False],
-        "model__alpha": [0.001, 0.01, 0.1, 0.5, 1],
-    },
-    RandomForestRegressor(): {
-        "model__max_depth": [None, 25, 50],
-        "model__max_features": [1, 0.5, "sqrt"],
-        "model__min_samples_leaf": [1, 4, 10],
-        "model__min_samples_split": [2, 5, 10],
-        "model__n_estimators": [10, 50, 200],
-    },
-    XGBRegressor(): {
-        "model__max_depth": [2, 3, 5, 10],
-        "model__learning_rate": [0.1, 0.01, 0.001],
-        "model__subsample": [0.5, 0.7, 1],
-        "model__n_estimators": [10, 50, 100, 500, 2000],
-    },
-}
+        LinearRegression(): {},
+        Lasso(): {
+            "model__fit_intercept": [True, False],
+            "model__alpha": loguniform(1e-4, 1), 
+        },
+        RandomForestRegressor(): {
+            "model__max_depth": randint(1, 100),
+            "model__max_features": [1, 0.5, "sqrt"],
+            "model__min_samples_leaf": randint(1, 20),
+            "model__min_samples_split": randint(2, 20),
+            "model__n_estimators": randint(5, 300),
+        },
+        XGBRegressor(): {
+            "model__max_depth": randint(2, 20),
+            "model__learning_rate": loguniform(1e-4, 0.1),
+            "model__subsample": uniform(0.3, 0.7),
+            "model__n_estimators": int_loguniform(5, 5000),
+        },
+    }
 
 # optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
 # if left blank out the best performing model will be used for the evaluation plots
@@ -107,7 +107,7 @@ for target_var in target_var_list:
         features, target_df, test_size=0.20, random_state=36
     )
     # run model pipeline
-    model_grid_cv_pipeline(
+    model_pipeline(
         model_param_dict=model_param_dict,
         target_var=target_var,
         target_df=target_df,
@@ -118,7 +118,7 @@ for target_var in target_var_list:
         x_test=x_test,
         y_test=y_test,
         output_path="Q:/SDU/LDC/modelling/outputs",
-        output_label="custom_pipeline_imputer_test",
+        output_label="custom_pipeline_randomsearch",
         col_label_map=col_labels,
         pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
