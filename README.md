@@ -72,26 +72,32 @@ Next you need to define the list of models and the hyperparameter search space t
 The example below shows some common models and some example hyperparameters from the scikit learn library.
 
 ```python
-model_param_dict = { 
-    LinearRegression(): {
-        'feature_filter__filter_features':  [True],
-        'feature_filter__feature_filter_list': [select_features_list]
-        },
-    Lasso(): {
-        'model__fit_intercept': [True, False],
-        'model__alpha': [0.001, 0.01, 0.1, 0.5, 1],
-        'feature_filter__filter_features': [True],
-        'feature_filter__feature_filter_list': [select_features_list]
-        },
-    DecisionTreeRegressor(): {
-            'model__max_depth': [None, 2, 5, 10, 25, 50],
-            'model__max_features': ['sqrt','auto', None],
-            'model__min_samples_leaf': [1, 2, 4, 6, 10],
-            'model__min_samples_split': [2, 5, 10],
-            'feature_filter__filter_features': [True],
+model_param_dict = {
+        LinearRegression(): {},
+        Lasso(): {
+            "model__fit_intercept": [True, False],
+            "model__alpha": loguniform(1e-4, 1), 
+            'feature_filter__filter_features':  [True],
             'feature_filter__feature_filter_list': [select_features_list]
-        }
-}
+        },
+        RandomForestRegressor(): {
+            "model__max_depth": randint(1, 100),
+            "model__max_features": [1, 0.5, "sqrt"],
+            "model__min_samples_leaf": randint(1, 20),
+            "model__min_samples_split": randint(2, 20),
+            "model__n_estimators": randint(5, 300),
+            'feature_filter__filter_features':  [True],
+            'feature_filter__feature_filter_list': [select_features_list]
+        },
+        XGBRegressor(): {
+            "model__max_depth": randint(2, 20),
+            "model__learning_rate": loguniform(1e-4, 0.1),
+            "model__subsample": uniform(0.3, 0.7),
+            "model__n_estimators": int_loguniform(5, 5000),
+            'feature_filter__filter_features':  [True],
+            'feature_filter__feature_filter_list': [select_features_list]
+        },
+    }
 ```
 
 ### Run the pipeline
