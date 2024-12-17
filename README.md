@@ -4,7 +4,7 @@ We have created a multi-stage modelling pipeline which can be applied to any reg
 
 The pipeline is implemented using the scikit-learn library.
 
-<img src="https://github.com/communitiesuk/SDU_real_time_indicators/blob/main/src/storytelling/devo_bua_regression_analysis/pipeline_diagram.PNG" width="700">
+<img src="https://github.com/communitiesuk/auto-ml-pipeline/blob/improving-param-search/src/utils/modelling_pipeline_diagram.PNG" width="700">
 
 ## Contents 
 
