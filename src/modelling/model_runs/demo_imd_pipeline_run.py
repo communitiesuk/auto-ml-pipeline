@@ -10,8 +10,6 @@ sys.path.append(repo.working_tree_dir)
 import pandas as pd
 from scipy.stats import uniform, loguniform, randint
 from sklearn.linear_model import LinearRegression, Lasso
-from sklearn.svm import SVR
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.preprocessing import MinMaxScaler

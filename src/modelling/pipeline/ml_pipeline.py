@@ -1,6 +1,4 @@
-from weakref import ref
 import git
-from typing import Any
 import os
 import pickle
 import datetime
@@ -21,7 +19,6 @@ from joblib import effective_n_jobs
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import VarianceThreshold  # Feature selector
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn import set_config
