@@ -23,7 +23,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold  # Feature selector
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn import set_config
 
 from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
@@ -235,7 +235,6 @@ def output_evaluation_metrics_and_plots(
         del best_params["feature_filter__feature_filter_list"]
     except KeyError:
         pass
-
     model_evaluation_dict = {
         "time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
         "model": model_name,
@@ -417,10 +416,11 @@ def model_grid_cv_pipeline(
 
         with mlflow.start_run(run_name=output_label + "_" + model_name) as run:
             # defining optimisation criteria here, this could be user defined in future.
-            full_pipeline = GridSearchCV(
+            full_pipeline = RandomizedSearchCV(
                 processing_pipeline,
                 model_param_dict[model],
                 cv=5,
+                n_iter=150,
                 scoring=["neg_root_mean_squared_error", "r2"],
                 refit="neg_root_mean_squared_error",
                 return_train_score=True,

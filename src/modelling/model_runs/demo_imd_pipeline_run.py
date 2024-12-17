@@ -18,6 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.impute import KNNImputer
 from sklearn.model_selection import train_test_split
 
+from src.utils.utils import int_loguniform
 from src.modelling.pipeline.ml_pipeline import (
     preprocess_features,
     preprocess_target,
@@ -60,42 +61,27 @@ target_var_list = ["Index of Multiple Deprivation (IMD) Score"]
 # Change feature_filter__filter_features hyperparm when usings, see linear regression model param dictionary for implementation
 select_features_list = []
 
-def float_to_int(rvs):
-    def rvs_wrapper(*args, **kwargs):
-        return rvs(*args, **kwargs).round().astype(int)
-    return rvs_wrapper
-
-def int_loguniform(low, high):
-    #Create a loguniform object
-    lu = loguniform(low, high)
-
-    #Wrap its rvs() with float-to-int
-    lu.rvs = float_to_int(lu.rvs)
-
-    #Return modified loguniform object
-    return lu
-
 # model dictionary and hyperparameter search space
 model_param_dict = {
-    LinearRegression(): {},
-    Lasso(): {
-        "model__fit_intercept": [True, False],
-        "model__alpha": loguniform(1e-4, 1), 
-    },
-    RandomForestRegressor(): {
-        "model__max_depth": randint(1, 100),
-        "model__max_features": [1, 0.5, "sqrt"],
-        "model__min_samples_leaf": randint(1, 20),
-        "model__min_samples_split": randint(2, 20),
-        "model__n_estimators": int_loguniform(5, 300),
-    },
-    XGBRegressor(): {
-        "model__max_depth": randint(2, 20),
-        "model__learning_rate": loguniform(1e-4, 0.1),
-        "model__subsample": uniform(0.3, 0.7),
-        "model__n_estimators": int_loguniform(5, 2000),
-    },
-}
+        LinearRegression(): {},
+        Lasso(): {
+            "model__fit_intercept": [True, False],
+            "model__alpha": loguniform(1e-4, 1), 
+        },
+        RandomForestRegressor(): {
+            "model__max_depth": randint(1, 100),
+            "model__max_features": [1, 0.5, "sqrt"],
+            "model__min_samples_leaf": randint(1, 20),
+            "model__min_samples_split": randint(2, 20),
+            "model__n_estimators": randint(5, 300),
+        },
+        XGBRegressor(): {
+            "model__max_depth": randint(2, 20),
+            "model__learning_rate": loguniform(1e-4, 0.1),
+            "model__subsample": uniform(0.3, 0.7),
+            "model__n_estimators": int_loguniform(5, 5000),
+        },
+    }
 
 # optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
 # if left blank out the best performing model will be used for the evaluation plots
@@ -134,7 +120,7 @@ for target_var in target_var_list:
         x_test=x_test,
         y_test=y_test,
         output_path="Q:/SDU/LDC/modelling/outputs",
-        output_label="custom_pipeline_imputer_test",
+        output_label="custom_pipeline_randomsearch",
         col_label_map=col_labels,
         pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
