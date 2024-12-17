@@ -305,9 +305,9 @@ def output_evaluation_metrics_and_plots(
     return
 
 
-def log_gridsearch_results_to_mlflow(model_name: str, output_label: str = "") -> None:
+def log_results_to_mlflow(model_name: str, output_label: str = "") -> None:
     """
-    Log all GridSearchCV results and hyperparameters to MLflow.
+    Log all randomised search cv results and hyperparameters to MLflow.
 
     Parameters:
     - model_name (str): A name to identify the model in the MLflow logs.
@@ -326,7 +326,7 @@ def log_gridsearch_results_to_mlflow(model_name: str, output_label: str = "") ->
     return
 
 
-def model_grid_cv_pipeline(
+def model_pipeline(
     model_param_dict: dict,
     target_var: str,
     target_df: pd.DataFrame,
@@ -346,7 +346,7 @@ def model_grid_cv_pipeline(
     custom_pre_processing_steps: list = [],
 ) -> None:
     """
-    Perform a grid search cross-validation for multiple regression models.
+    Perform randomised search cross-validation for multiple regression models.
 
     Parameters:
     - model_param_dict (dict): Dictionary containing regression models and their hyperparameter grids.
@@ -412,7 +412,7 @@ def model_grid_cv_pipeline(
             )
 
         # log model parameters and metrics to MLflow
-        log_gridsearch_results_to_mlflow(model_name, output_label)
+        log_results_to_mlflow(model_name, output_label)
 
         with mlflow.start_run(run_name=output_label + "_" + model_name) as run:
             # defining optimisation criteria here, this could be user defined in future.

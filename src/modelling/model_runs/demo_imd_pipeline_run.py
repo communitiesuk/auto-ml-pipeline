@@ -23,7 +23,7 @@ from src.modelling.pipeline.ml_pipeline import (
     preprocess_features,
     preprocess_target,
     FilterFeatures,
-    model_grid_cv_pipeline,
+    model_pipeline,
 )
 
 
@@ -109,7 +109,7 @@ for target_var in target_var_list:
         features, target_df, test_size=0.20, random_state=36
     )
     # run model pipeline
-    model_grid_cv_pipeline(
+    model_pipeline(
         model_param_dict=model_param_dict,
         target_var=target_var,
         target_df=target_df,
