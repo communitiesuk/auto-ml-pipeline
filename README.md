@@ -197,7 +197,11 @@ model_param_dict = {
 ```
 ### Provide custom pre-processing steps
 
-You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from scikit-learn. If this variable is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
+You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from scikit-learn. 
+
+To use custom steps, pass the pre_processing_pipeline_steps to the model_pipeline function using the custom_pre_processing_steps paramter.
+
+If the custom_pre_processing_steps paramter is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
 
 ```python
 
@@ -214,11 +218,34 @@ pre_processing_pipeline_steps = [
 The col_labels dictionary can be used to create cleaner or shorter variable names for use in the evaluation plots.
 
 ```python
-
-
 col_labels = {
     "long feature label 1": "Short label 1",
     "long feature label 2": "Short label 2",
     "long feature label 3": "Short label 3"
 }
 ```
+
+### Specify model type to evaluate 
+
+optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
+
+To evaluate a specifc model type, pass the user_model to the model_pipeline() function using the user_evaluation_model paramter.
+
+If user_evaluation_model is removed or user_model is left blank, the best performing model will be used for the evaluation plots
+
+```python
+user_model = "Lasso"
+}
+```
+
+### Shap plots - local feature importance
+
+Shap force plots (need to give overview)
+
+Set shap_id_keys to a list containing the IDs of the observations you would like to create force plots for. 
+
+See the [shap docs](https://shap.readthedocs.io/en/latest/generated/shap.plots.force.html) for more details.
+
+```python
+        shap_id_keys=["E02000266", "E02000503"],
+ ```
