@@ -43,21 +43,21 @@ conda activate auto-ml
 
 The pipeline uses tabular input data where each row represents a single observation (e.g. a local authority), while each column represents a specific attribute or variable related to the observation (e.g. the healthly life expectancy in the local authority).
 
-The first step in the pipeline is to read in your data to a Pandas dataframe (including both feature and target columns) and remove any duplicate rows or rows containing NAs.
+The first step in the pipeline is to read in your data to a Pandas dataframe (including both feature and target columns) and remove any duplicate rows or rows containing NAs if necessary.
 
 ```python
 data_path = "path/to/your/data.csv"
 
-main_df = pd.read_csv(data_path)
-main_df = main_df.drop_duplicates()
-main_df = main_df.dropna()
+regression_data = pd.read_csv(data_path)
+regression_data = regression_data.drop_duplicates()
+regression_data = regression_data.dropna()
 ```
 
 ### Specify columns to drop
 
 The next step is to remove any columns that you want to remove from your modelling pipeline. These can be identifier columns that will not help the model learning process (e.g local authority codes). Or they could be variables that will not provide helpful conclusions about your research question (e.g. using GVA in 2020 would not provide much insight when predicting the underlying drivers of GVA in 2021).
 
-The target variable list should contain all of the variables that you want to use as target variables in your modelling loop. 
+The target variable list should contain all of the variables that you want to use as target/dependant variables in your modelling loop. 
 
 ```python
 geography_variables = ['geo_col1', 'geo_col2']
@@ -69,7 +69,7 @@ target_var_list = ["target_variable_1", "target_variable_2"]
 
 Next you need to define the list of models and the hyperparameter search space to use in the pipeline.
 
-The example below shows some common models and some example hyperparameters from the scikit learn library.
+The example below shows some common models and some example hyperparameters from the scikit-learn library.
 
 ```python
 model_param_dict = {
@@ -100,13 +100,15 @@ model_param_dict = {
     }
 ```
 
+You can add new models by adding them to the model_param_dict object with the corresponding hyperparamters that you'd like to optimise for. Please see the [scikit-learn documentation ](https://scikit-learn.org/stable/api/index.html) for more example model architectures that you can use in the pipeline.
+
 ### Run the pipeline
 
 The following code shows an example of running the pipeline.
 
-First the data is preprocessed by dropping specified columns and performing dummy encoding. The data is then split into a traning and test set.
+First the data is preprocessed by dropping specified columns and performing dummy encoding. The data is then split into a training and test set.
 
-The main model pipeline function is called which will train and evaluate the models for each of the model types specified in the model_param_dict dictionary. The output_label variable is used to specifiy a label to add to each of the output files for the pipeline run.
+The main model pipeline function is called which will train and evaluate the models for each of the model types specified in the model_param_dict dictionary. The output_label variable is used to specify a label to add to each of the output files for the pipeline run.
 
 This pipeline loop is then repeated for each variable in the target_var_list.
 
@@ -168,7 +170,7 @@ model_param_dict = {
 ```
 ### Provide custom pre-processing steps
 
-You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from Scikit learn. If this variable is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
+You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from scikit-learn. If this variable is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
 
 ```python
 
