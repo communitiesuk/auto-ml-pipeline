@@ -1,10 +1,9 @@
+# fixing directory to root of project
 import git
 import os
-
-repo = git.Repo(".", search_parent_directories=True)
-os.chdir(repo.working_tree_dir)
 import sys
-
+repo = git.Repo('.', search_parent_directories=True)
+os.chdir(repo.working_tree_dir)
 sys.path.append(repo.working_tree_dir)
 
 import pandas as pd
@@ -96,6 +95,6 @@ for target_var in target_var_list:
         pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
         shap_plots=True,
-        shap_id_keys=["E02002680", "E02002707"],
+        shap_id_keys=["E02000266", "E02000503"],
         custom_pre_processing_steps=pre_processing_pipeline_steps,
     )

@@ -113,20 +113,47 @@ The main model pipeline function is called which will train and evaluate the mod
 This pipeline loop is then repeated for each variable in the target_var_list.
 
 ```python
+# run pipeline for all models
 for target_var in target_var_list:
-    # Preprocess the data
-    cols_to_drop = list(set([target_var] + drop_variables + geography_variables))
-    features = preprocess_features(df=main_df, cols_to_drop=cols_to_drop)
-    target_df = preprocess_target(df=main_df, target_col=target_var)
-
-    # Split the data into training and test sets
-    x_train, x_test, y_train, y_test = train_test_split(features, target_df, test_size=0.20, random_state=36)
-
-    # Run the model pipeline
-    model_grid_cv_pipeline(model_param_dict, target_var, target_df, x_train, y_train, x_test, y_test, 
-    output_label="output_label", col_label_map=col_labels)
+    # pre-processing
+    # drop cols, convert to set to drop unique cols only
+    cols_to_drop = list(set([target_var] + drop_variables))
+    features = preprocess_features(df=regression_data, cols_to_drop=cols_to_drop)
+    target_df = preprocess_target(df=regression_data, target_col=target_var)
+    # test set of 20%
+    x_train, x_test, y_train, y_test = train_test_split(
+        features, target_df, test_size=0.20, random_state=36
+    )
+    # run model pipeline
+    model_pipeline(
+        model_param_dict=model_param_dict,
+        target_var=target_var,
+        target_df=target_df,
+        id_col="msoa11cd",
+        original_df=regression_data,
+        x_train=x_train,
+        y_train=y_train,
+        x_test=x_test,
+        y_test=y_test,
+        output_path="your/output/path",
+        output_label="demo",
+        col_label_map=col_labels,
+        pd_y_label="IMD Average Score",
+        user_evaluation_model=user_model,
+        shap_plots=True,
+        shap_id_keys=["E02002680", "E02002707"],
+        custom_pre_processing_steps=pre_processing_pipeline_steps,
+    )
 ```
-
+The final parameters show below are optional. Their usage is described in [Optional steps](#optional-steps). If you do not want to use them simply remove them from the function call and run the pipeline in the same way as above.
+```python
+        col_label_map=col_labels,
+        pd_y_label="IMD Average Score",
+        user_evaluation_model=user_model,
+        shap_plots=True,
+        shap_id_keys=["E02000266", "E02000503"],
+        custom_pre_processing_steps=pre_processing_pipeline_steps,
+```
 ### Interpretation of results
 
 After running the pipeline, the model evaluation metrics and plots will be saved to the specified output file path. These results will include:
