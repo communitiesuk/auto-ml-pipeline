@@ -100,15 +100,15 @@ model_param_dict = {
     }
 ```
 
-You can add new models by adding them to the model_param_dict object with the corresponding hyperparamters that you'd like to optimise for. Please see the [scikit-learn documentation ](https://scikit-learn.org/stable/api/index.html) for more example model architectures that you can use in the pipeline.
+You can add new models by adding them to the model_param_dict object with the corresponding hyperparamters that you'd like to optimise for. Please see the [scikit-learn documentation](https://scikit-learn.org/stable/api/index.html) for more example model architectures that you can use in the pipeline.
 
 ### Run the pipeline
 
 The following code shows an example of running the pipeline.
 
-First the data is preprocessed by dropping specified columns and performing dummy encoding. The data is then split into a training and test set.
+First the feature data is preprocessed by dropping the specified columns and target variable and performing one-hot dummy encoding. This step can be ommitted if one-hot encoding is not desirable. The target data is separate from the rest of the data for use in the pipeline.
 
-The main model pipeline function is called which will train and evaluate the models for each of the model types specified in the model_param_dict dictionary. The output_label variable is used to specify a label to add to each of the output files for the pipeline run.
+The main model pipeline function is called which will train and evaluate the models for each of the model types specified in the model_param_dict dictionary. The output_label variable is used to specify a label to add to each of the output files for the pipeline run. Within the main pipeline code, the data is split into a training and test set (80%/20%).
 
 This pipeline loop is then repeated for each variable in the target_var_list.
 
@@ -120,37 +120,27 @@ for target_var in target_var_list:
     cols_to_drop = list(set([target_var] + drop_variables))
     features = preprocess_features(df=regression_data, cols_to_drop=cols_to_drop)
     target_df = preprocess_target(df=regression_data, target_col=target_var)
-    # test set of 20%
-    x_train, x_test, y_train, y_test = train_test_split(
-        features, target_df, test_size=0.20, random_state=36
-    )
+
     # run model pipeline
     model_pipeline(
         model_param_dict=model_param_dict,
         target_var=target_var,
         target_df=target_df,
+        feature_df=features,
         id_col="msoa11cd",
         original_df=regression_data,
-        x_train=x_train,
-        y_train=y_train,
-        x_test=x_test,
-        y_test=y_test,
-        output_path="your/output/path",
-        output_label="demo",
+        output_path="Q:/SDU/LDC/modelling/outputs",
+        output_label="msoa_demo",
         col_label_map=col_labels,
-        pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
-        shap_plots=True,
-        shap_id_keys=["E02002680", "E02002707"],
+        shap_id_keys=["E02000266", "E02000503"],
         custom_pre_processing_steps=pre_processing_pipeline_steps,
     )
 ```
 The final parameters show below are optional. Their usage is described in [Optional steps](#optional-steps). If you do not want to use them simply remove them from the function call and run the pipeline in the same way as above.
 ```python
         col_label_map=col_labels,
-        pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
-        shap_plots=True,
         shap_id_keys=["E02000266", "E02000503"],
         custom_pre_processing_steps=pre_processing_pipeline_steps,
 ```
