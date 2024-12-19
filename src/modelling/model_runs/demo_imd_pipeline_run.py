@@ -94,7 +94,6 @@ for target_var in target_var_list:
         col_label_map=col_labels,
         pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
-        shap_plots=True,
         shap_id_keys=["E02000266", "E02000503"],
         custom_pre_processing_steps=pre_processing_pipeline_steps,
     )

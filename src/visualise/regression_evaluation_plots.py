@@ -607,6 +607,10 @@ def create_shap_plots(
     Returns:
         None
     """
+    # check if shap id keys provided, return if not
+    if not shap_id_keys:
+        print(f"No shap id keys provided")
+        return
     # init for plotting
     shap.initjs()
     model = full_pipeline.best_estimator_.named_steps["model"]
@@ -694,7 +698,6 @@ def create_model_evaluation_plots(
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
         col_labels (dict, optional): Column labels for the features. Defaults to empty dict.
         pd_y_label (str, optional): Y-axis label for partial dependence plots. Defaults to "".
-        shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
         shap_id_keys (list, optional): List for rows to create shap plots for.
         index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
@@ -748,17 +751,16 @@ def create_model_evaluation_plots(
         pd_y_label,
         feature_diff_dict,
     )
-    if shap_plots:
-        create_shap_plots(
-            id_col,
-            original_df,
-            x_test,
-            x_train,
-            full_pipeline,
-            target_var,
-            shap_id_keys,
-            output_label,
-            output_path,
-            index_mapping,
-        )
+    create_shap_plots(
+        id_col,
+        original_df,
+        x_test,
+        x_train,
+        full_pipeline,
+        target_var,
+        shap_id_keys,
+        output_label,
+        output_path,
+        index_mapping,
+    )
     return
