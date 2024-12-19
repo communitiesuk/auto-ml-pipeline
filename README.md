@@ -60,7 +60,6 @@ The next step is to remove any columns that you want to remove from your modelli
 The target variable list should contain all of the variables that you want to use as target/dependant variables in your modelling loop. 
 
 ```python
-geography_variables = ['geo_col1', 'geo_col2']
 drop_variables = ['unwanted_col1', 'unwanted_col2', 'unwanted_col3']
 target_var_list = ["target_variable_1", "target_variable_2"]
 ```
