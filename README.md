@@ -130,7 +130,7 @@ for target_var in target_var_list:
         feature_df=features,
         id_col="msoa11cd",
         original_df=regression_data,
-        output_path="Q:/SDU/LDC/modelling/outputs",
+        output_path="your/output/path",
         output_label="msoa_demo",
         col_label_map=col_labels,
         user_evaluation_model=user_model,
