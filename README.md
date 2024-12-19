@@ -226,7 +226,6 @@ If user_evaluation_model is removed or user_model is left blank, the best perfor
 
 ```python
 user_model = "Lasso"
-}
 ```
 
 ### Shap plots - local feature importance
