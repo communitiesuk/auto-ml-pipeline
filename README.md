@@ -199,7 +199,7 @@ model_param_dict = {
 
 You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from scikit-learn. 
 
-To use custom steps, pass the pre_processing_pipeline_steps to the model_pipeline function using the custom_pre_processing_steps paramter.
+To use custom steps, pass the pre_processing_pipeline_steps to the model_pipeline function using the custom_pre_processing_steps parameter.
 
 If the custom_pre_processing_steps paramter is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
 
@@ -240,9 +240,9 @@ user_model = "Lasso"
 
 ### Shap plots - local feature importance
 
-Shap force plots (need to give overview)
+The pipeline can also create shap force plots for specified observations in the data. These plots allow you to understand the contributions of different features to the model's predictions.
 
-Set shap_id_keys to a list containing the IDs of the observations you would like to create force plots for. 
+To create shap plots set shap_id_keys to a list containing the IDs of the observations you would like to create force plots for. The keys should correspond to values found in the id_col parameter that is passed to the main ml_pipeline function.
 
 See the [shap docs](https://shap.readthedocs.io/en/latest/generated/shap.plots.force.html) for more details.
 
