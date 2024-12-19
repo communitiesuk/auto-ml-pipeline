@@ -1,10 +1,12 @@
-# Predictive modelling pipeline guidance
+# Automatic regression pipeline guidance
 
 We have created a multi-stage modelling pipeline which can be applied to any regression machine learning problem. The following guidance explains how to run the pipeline using your own data.
 
 The pipeline is implemented using the scikit-learn library.
 
 <img src="https://github.com/communitiesuk/auto-ml-pipeline/blob/main/src/utils/modelling_pipeline_diagram.PNG" width="700">
+
+For any suggestions or feedback, please contact sean.ogara@communities.gov.uk, or raise a GitHub issue.
 
 ## Contents 
 
