@@ -59,7 +59,7 @@ select_features_list = []
 # if left blank out the best performing model will be used for the evaluation plots
 user_model = ""
 # shortened feature name label for evaluation plots
-col_labels = {}
+col_labels = {"imd_avg_score": "IMD Average Score"}
 # custom pre-processing pipeline - remove to use default pre-processing pipeline: FilterFeatures(), StandardScaler()
 pre_processing_pipeline_steps = [
     ("feature_filter", FilterFeatures()),
@@ -92,7 +92,6 @@ for target_var in target_var_list:
         output_path="Q:/SDU/LDC/modelling/outputs",
         output_label="msoa_demo",
         col_label_map=col_labels,
-        pd_y_label="IMD Average Score",
         user_evaluation_model=user_model,
         shap_id_keys=["E02000266", "E02000503"],
         custom_pre_processing_steps=pre_processing_pipeline_steps,

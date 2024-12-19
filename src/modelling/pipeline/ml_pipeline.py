@@ -178,8 +178,6 @@ def output_evaluation_metrics_and_plots(
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
-    pd_y_label: str = "",
-    shap_plots: bool = False,
     shap_id_keys: list = [],
     index_mapping: dict = {},
 ) -> None:
@@ -214,8 +212,6 @@ def output_evaluation_metrics_and_plots(
     - output_label (str): A label to add to the output files saved.
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots.
-    - pd_y_label (str, optional): A label the y axis of the PD plots.
-    - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
     - index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
@@ -266,8 +262,6 @@ def output_evaluation_metrics_and_plots(
             output_label,
             output_path,
             col_label_map,
-            pd_y_label,
-            shap_plots,
             shap_id_keys,
             index_mapping,
         )
@@ -294,8 +288,6 @@ def output_evaluation_metrics_and_plots(
                 output_label,
                 output_path,
                 col_label_map,
-                pd_y_label,
-                shap_plots,
                 shap_id_keys,
                 index_mapping,
             )
@@ -336,9 +328,7 @@ def model_pipeline(
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
-    pd_y_label: str = "",
     user_evaluation_model: str = "",
-    shap_plots: bool = False,
     shap_id_keys: list = [],
     custom_pre_processing_steps: list = [],
 ) -> None:
@@ -358,10 +348,8 @@ def model_pipeline(
     - output_label (str): A label to add to the output files saved.
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots
-    - pd_y_label (str, optional): A label the y axis of the PD plots.
     - user_evaluation_model (str, optional): User defined model to use when creating evaluation plots.
       If not defined, evaluation plots will be created for the best performing model.
-    - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
     - custom_pre_processing_steps (list, optional): List of user provided steps for custom pre-processing pipeline
 
@@ -494,8 +482,6 @@ def model_pipeline(
             output_label,
             output_path,
             col_label_map,
-            pd_y_label,
-            shap_plots,
             shap_id_keys,
             index_mapping,
         )
