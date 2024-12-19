@@ -238,5 +238,5 @@ To create shap plots set shap_id_keys to a list containing the IDs of the observ
 See the [shap docs](https://shap.readthedocs.io/en/latest/generated/shap.plots.force.html) for more details.
 
 ```python
-        shap_id_keys=["E02000266", "E02000503"],
+shap_id_keys=["E02000266", "E02000503"]
  ```
