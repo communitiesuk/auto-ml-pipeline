@@ -13,7 +13,6 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.impute import KNNImputer
-from sklearn.model_selection import train_test_split
 
 from src.utils.utils import int_loguniform
 from src.modelling.pipeline.ml_pipeline import (
@@ -74,21 +73,15 @@ for target_var in target_var_list:
     cols_to_drop = list(set([target_var] + drop_variables))
     features = preprocess_features(df=regression_data, cols_to_drop=cols_to_drop)
     target_df = preprocess_target(df=regression_data, target_col=target_var)
-    # test set of 20%
-    x_train, x_test, y_train, y_test = train_test_split(
-        features, target_df, test_size=0.20, random_state=36
-    )
+
     # run model pipeline
     model_pipeline(
         model_param_dict=model_param_dict,
         target_var=target_var,
         target_df=target_df,
+        feature_df=features,
         id_col="msoa11cd",
         original_df=regression_data,
-        x_train=x_train,
-        y_train=y_train,
-        x_test=x_test,
-        y_test=y_test,
         output_path="Q:/SDU/LDC/modelling/outputs",
         output_label="msoa_demo",
         col_label_map=col_labels,

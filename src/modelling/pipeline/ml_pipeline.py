@@ -20,7 +20,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn import set_config
 
 from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
@@ -319,12 +319,9 @@ def model_pipeline(
     model_param_dict: dict,
     target_var: str,
     target_df: pd.DataFrame,
+    feature_df: pd.DataFrame,
     id_col: str,
     original_df: pd.DataFrame,
-    x_train: pd.DataFrame,
-    y_train: np.ndarray,
-    x_test: pd.DataFrame,
-    y_test: np.ndarray,
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
@@ -338,7 +335,8 @@ def model_pipeline(
     Parameters:
     - model_param_dict (dict): Dictionary containing regression models and their hyperparameter grids.
     - target_var (str): Name of the target variable.
-    - target_df (str): Original target df.
+    - target_df (pd.DataFrame): Original target df.
+    - feature_df (pd.DataFrame): Original feature df.
     - id_col (str): Name of the unique id variable for each row in the dataset.
     - original_df (str): Original full feature and target df with id col.
     - x_train (pd.DataFrame): Training input data.
@@ -356,6 +354,10 @@ def model_pipeline(
 
     Returns: None
     """ 
+    # create test set of 20%
+    x_train, x_test, y_train, y_test = train_test_split(
+        feature_df, target_df, test_size=0.20, random_state=36
+    )
     # print number of cores available for parallel processing
     print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
 
