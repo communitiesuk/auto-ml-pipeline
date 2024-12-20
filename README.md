@@ -76,7 +76,10 @@ The example below shows some common models and some example hyperparameters from
 
 ```python
 model_param_dict = {
-        LinearRegression(): {},
+        LinearRegression(): {
+            'feature_filter__filter_features':  [True],
+            'feature_filter__feature_filter_list': [select_features_list]
+        },
         Lasso(): {
             "model__fit_intercept": [True, False],
             "model__alpha": loguniform(1e-4, 1), 
