@@ -47,6 +47,8 @@ The pipeline uses tabular input data where each row represents a single observat
 
 The first step in the pipeline is to read in your data to a Pandas dataframe (including both feature and target columns) and remove any duplicate rows or rows containing NAs if necessary.
 
+Alternatively you can use scikit-learn imputers to replace missing values in your data. See the [Provide custom pre-processing steps](#provide-custom-pre-processing-steps) section for instructions of how to incorporate imputers into your pipeline.
+
 ```python
 data_path = "path/to/your/data.csv"
 
