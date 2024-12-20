@@ -77,14 +77,14 @@ The example below shows some common models and some example hyperparameters from
 ```python
 model_param_dict = {
         LinearRegression(): {
-            'feature_filter__filter_features':  [True],
-            'feature_filter__feature_filter_list': [select_features_list]
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
         },
         Lasso(): {
             "model__fit_intercept": [True, False],
             "model__alpha": loguniform(1e-4, 1), 
-            'feature_filter__filter_features':  [True],
-            'feature_filter__feature_filter_list': [select_features_list]
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
         },
         RandomForestRegressor(): {
             "model__max_depth": randint(1, 100),
@@ -92,27 +92,27 @@ model_param_dict = {
             "model__min_samples_leaf": randint(1, 20),
             "model__min_samples_split": randint(2, 20),
             "model__n_estimators": randint(5, 300),
-            'feature_filter__filter_features':  [True],
-            'feature_filter__feature_filter_list': [select_features_list]
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
         },
         XGBRegressor(): {
             "model__max_depth": randint(2, 20),
             "model__learning_rate": loguniform(1e-4, 0.1),
             "model__subsample": uniform(0.3, 0.7),
             "model__n_estimators": int_loguniform(5, 5000),
-            'feature_filter__filter_features':  [True],
-            'feature_filter__feature_filter_list': [select_features_list]
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
         },
     }
 ```
 
-You can add new models by adding them to the model_param_dict object with the corresponding hyperparamters that you'd like to optimise for. Please see the [scikit-learn documentation](https://scikit-learn.org/stable/api/index.html) for more example model architectures that you can use in the pipeline.
+You can add new models by adding them to the model_param_dict object with the corresponding hyperparameters that you'd like to optimise for. Please see the [scikit-learn documentation](https://scikit-learn.org/stable/api/index.html) for more example model architectures that you can use in the pipeline.
 
 ### Run the pipeline
 
 The following code shows an example of running the pipeline.
 
-First the feature data is preprocessed by dropping the specified columns and target variable and performing one-hot dummy encoding. This step can be ommitted if one-hot encoding is not desirable. The target data is separate from the rest of the data for use in the pipeline.
+First the feature data is preprocessed by dropping the specified drop columns and target variable and performing one-hot dummy encoding. This step can be omitted if one-hot encoding is not desirable. The target data is separate from the rest of the data for use in the pipeline.
 
 The main model pipeline function is called which will train and evaluate the models for each of the model types specified in the model_param_dict dictionary. The output_label variable is used to specify a label to add to each of the output files for the pipeline run. Within the main pipeline code, the data is split into a training and test set (80%/20%).
 
@@ -197,7 +197,7 @@ You can add custom pre-processing steps to the pipeline using the pre_processing
 
 To use custom steps, pass the pre_processing_pipeline_steps to the model_pipeline function using the custom_pre_processing_steps parameter.
 
-If the custom_pre_processing_steps paramter is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
+If the custom_pre_processing_steps parameter is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
 
 ```python
 
@@ -225,7 +225,7 @@ col_labels = {
 
 optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
 
-To evaluate a specifc model type, pass the user_model to the model_pipeline() function using the user_evaluation_model paramter.
+To evaluate a specific model type, pass the user_model to the model_pipeline() function using the user_evaluation_model parameter.
 
 If user_evaluation_model is removed or user_model is left blank, the best performing model will be used for the evaluation plots
 
