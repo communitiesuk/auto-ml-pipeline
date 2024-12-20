@@ -28,6 +28,7 @@ from src.visualise.regression_evaluation_plots import create_model_evaluation_pl
 # set config to track feature names after transformations
 set_config(transform_output="pandas")
 
+
 # Define preprocessing functions
 def preprocess_target(df: pd.DataFrame, target_col: str) -> np.ndarray:
     """
@@ -353,14 +354,13 @@ def model_pipeline(
 
 
     Returns: None
-    """ 
+    """
     # create test set of 20%
     x_train, x_test, y_train, y_test = train_test_split(
         feature_df, target_df, test_size=0.20, random_state=36
     )
     # print number of cores available for parallel processing
     print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
-
 
     # initialise evaluation metric checker to track best performing model
     best_r2 = -100
@@ -383,7 +383,7 @@ def model_pipeline(
     for model in model_param_dict.keys():
         model_name = str(model).split("(")[0]
         print(model_name)
-        
+
         # apply custom pre_processing steps, else use default processing pipeline
         if custom_pre_processing_steps:
             steps = custom_pre_processing_steps.copy()

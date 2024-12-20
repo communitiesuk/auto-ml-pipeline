@@ -2,7 +2,8 @@
 import git
 import os
 import sys
-repo = git.Repo('.', search_parent_directories=True)
+
+repo = git.Repo(".", search_parent_directories=True)
 os.chdir(repo.working_tree_dir)
 sys.path.append(repo.working_tree_dir)
 
@@ -24,32 +25,34 @@ from src.modelling.pipeline.ml_pipeline import (
 
 
 # demonstration model run using LDC data to predict IMD score at MSOA level
-regression_data = pd.read_csv("Q:/SDU/LDC/modelling/data/processed/msoa_ldc_imd_sample.csv")
+regression_data = pd.read_csv(
+    "Q:/SDU/LDC/modelling/data/processed/msoa_ldc_imd_sample.csv"
+)
 # target variables
 target_var_list = ["imd_avg_score"]
 # drop any unecessary variables from the model. In this case, we are dropping the geographical identifier.
 drop_variables = ["msoa11cd"]
 # model dictionary and hyperparameter search space
 model_param_dict = {
-        LinearRegression(): {},
-        Lasso(): {
-            "model__fit_intercept": [True, False],
-            "model__alpha": loguniform(1e-4, 1), 
-        },
-        RandomForestRegressor(): {
-            "model__max_depth": randint(1, 100),
-            "model__max_features": [1, 0.5, "sqrt"],
-            "model__min_samples_leaf": randint(1, 20),
-            "model__min_samples_split": randint(2, 20),
-            "model__n_estimators": randint(5, 300),
-        },
-        XGBRegressor(): {
-            "model__max_depth": randint(2, 20),
-            "model__learning_rate": loguniform(1e-4, 0.1),
-            "model__subsample": uniform(0.3, 0.7),
-            "model__n_estimators": int_loguniform(5, 5000),
-        },
-    }
+    LinearRegression(): {},
+    Lasso(): {
+        "model__fit_intercept": [True, False],
+        "model__alpha": loguniform(1e-4, 1),
+    },
+    RandomForestRegressor(): {
+        "model__max_depth": randint(1, 100),
+        "model__max_features": [1, 0.5, "sqrt"],
+        "model__min_samples_leaf": randint(1, 20),
+        "model__min_samples_split": randint(2, 20),
+        "model__n_estimators": randint(5, 300),
+    },
+    XGBRegressor(): {
+        "model__max_depth": randint(2, 20),
+        "model__learning_rate": loguniform(1e-4, 0.1),
+        "model__subsample": uniform(0.3, 0.7),
+        "model__n_estimators": int_loguniform(5, 5000),
+    },
+}
 # optional controls:
 # select features list - use to subset specific features of interest, if blank it will use all features.
 # change feature_filter__filter_features hyperparam when using this

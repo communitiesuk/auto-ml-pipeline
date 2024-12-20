@@ -4,7 +4,7 @@ from scipy.stats import loguniform
 
 def float_to_int(rvs: Callable) -> Callable:
     """
-    Wraps a callable that generates floating-point random values and converts 
+    Wraps a callable that generates floating-point random values and converts
     its output to rounded integers.
 
     Args:
@@ -13,6 +13,7 @@ def float_to_int(rvs: Callable) -> Callable:
     Returns:
         Callable: A wrapped callable that returns rounded integers.
     """
+
     def rvs_wrapper(*args, **kwargs):
         """
         Wrapper function to generate rounded integer values.
