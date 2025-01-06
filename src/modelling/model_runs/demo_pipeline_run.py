@@ -31,10 +31,11 @@ from src.modelling.pipeline.ml_pipeline import (
 ons_ess_data = pd.read_csv("data/processed/machine_readable.csv", skiprows=1)
 # filtering and tranforming data for use in modelling pipeline
 indicators = [
-    "Life satisfaction",
     "Gross disposable household income per head",
     "Aged 16 to 64 years employment rate (Great Britain)",
-    "Gigabit capable broadband"
+    "Gigabit capable broadband",
+    "Male healthy life expectancy",
+    "Female healthy life expectancy"
 ]
 # filter for local authority disctricts only and the indicators of interest
 ons_ess_data = ons_ess_data[(ons_ess_data["Geography"] == "Local Authority District") & (ons_ess_data["Indicator"].isin(indicators))]
@@ -44,7 +45,7 @@ regression_data = pd.pivot_table(ons_ess_data, values="Value", columns="Indicato
 regression_data.dropna(inplace=True) 
 
 # target variables
-target_var_list = ["Life satisfaction"]
+target_var_list = ["Gross disposable household income per head"]
 # drop any unecessary variables from the model. In this case, we are dropping the geographical identifier.
 drop_variables = ["AREACD", "AREANM"]
 # model dictionary and hyperparameter search space
@@ -104,6 +105,6 @@ for target_var in target_var_list:
         output_label="demo",
         col_label_map=col_labels,
         user_evaluation_model=user_model,
-        shap_id_keys=["Cambridge", "Eden"],
+        shap_id_keys=["Merthyr Tydfil", "Monmouthshire"],
         custom_pre_processing_steps=pre_processing_pipeline_steps,
     )
