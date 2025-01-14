@@ -1,10 +1,12 @@
-# Predictive modelling pipeline guidance
+# Automatic regression pipeline
 
 We have created a multi-stage modelling pipeline which can be applied to any regression machine learning problem. The following guidance explains how to run the pipeline using your own data.
 
 The pipeline is implemented using the scikit-learn library.
 
-<img src="https://github.com/communitiesuk/auto-ml-pipeline/blob/improving-param-search/src/utils/modelling_pipeline_diagram.PNG" width="700">
+<img src="https://github.com/communitiesuk/auto-ml-pipeline/blob/main/src/utils/modelling_pipeline_diagram.PNG" width="700">
+
+For any suggestions or feedback, please contact sean.ogara@communities.gov.uk, or raise a GitHub issue.
 
 ## Contents 
 
@@ -43,24 +45,25 @@ conda activate auto-ml
 
 The pipeline uses tabular input data where each row represents a single observation (e.g. a local authority), while each column represents a specific attribute or variable related to the observation (e.g. the healthly life expectancy in the local authority).
 
-The first step in the pipeline is to read in your data to a Pandas dataframe (including both feature and target columns) and remove any duplicate rows or rows containing NAs.
+The first step in the pipeline is to read in your data to a Pandas dataframe (including both feature and target columns) and remove any duplicate rows or rows containing NAs if necessary.
+
+Alternatively you can use scikit-learn imputers to replace missing values in your data. See the [Provide custom pre-processing steps](#provide-custom-pre-processing-steps) section for instructions of how to incorporate imputers into your pipeline.
 
 ```python
 data_path = "path/to/your/data.csv"
 
-main_df = pd.read_csv(data_path)
-main_df = main_df.drop_duplicates()
-main_df = main_df.dropna()
+regression_data = pd.read_csv(data_path)
+regression_data = regression_data.drop_duplicates()
+regression_data = regression_data.dropna()
 ```
 
 ### Specify columns to drop
 
 The next step is to remove any columns that you want to remove from your modelling pipeline. These can be identifier columns that will not help the model learning process (e.g local authority codes). Or they could be variables that will not provide helpful conclusions about your research question (e.g. using GVA in 2020 would not provide much insight when predicting the underlying drivers of GVA in 2021).
 
-The target variable list should contain all of the variables that you want to use as target variables in your modelling loop. 
+The target variable list should contain all of the variables that you want to use as target/dependant variables in your modelling loop. 
 
 ```python
-geography_variables = ['geo_col1', 'geo_col2']
 drop_variables = ['unwanted_col1', 'unwanted_col2', 'unwanted_col3']
 target_var_list = ["target_variable_1", "target_variable_2"]
 ```
@@ -69,16 +72,19 @@ target_var_list = ["target_variable_1", "target_variable_2"]
 
 Next you need to define the list of models and the hyperparameter search space to use in the pipeline.
 
-The example below shows some common models and some example hyperparameters from the scikit learn library.
+The example below shows some common models and some example hyperparameters from the scikit-learn library.
 
 ```python
 model_param_dict = {
-        LinearRegression(): {},
+        LinearRegression(): {
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
+        },
         Lasso(): {
             "model__fit_intercept": [True, False],
             "model__alpha": loguniform(1e-4, 1), 
-            'feature_filter__filter_features':  [True],
-            'feature_filter__feature_filter_list': [select_features_list]
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
         },
         RandomForestRegressor(): {
             "model__max_depth": randint(1, 100),
@@ -86,45 +92,64 @@ model_param_dict = {
             "model__min_samples_leaf": randint(1, 20),
             "model__min_samples_split": randint(2, 20),
             "model__n_estimators": randint(5, 300),
-            'feature_filter__filter_features':  [True],
-            'feature_filter__feature_filter_list': [select_features_list]
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
         },
         XGBRegressor(): {
             "model__max_depth": randint(2, 20),
             "model__learning_rate": loguniform(1e-4, 0.1),
             "model__subsample": uniform(0.3, 0.7),
             "model__n_estimators": int_loguniform(5, 5000),
-            'feature_filter__filter_features':  [True],
-            'feature_filter__feature_filter_list': [select_features_list]
+            "feature_filter__filter_features":  [True],
+            "feature_filter__feature_filter_list": [select_features_list]
         },
     }
 ```
+
+You can add new models by adding them to the model_param_dict object with the corresponding hyperparameters that you'd like to optimise for. Please see the [scikit-learn documentation](https://scikit-learn.org/stable/api/index.html) for more example model architectures that you can use in the pipeline.
 
 ### Run the pipeline
 
 The following code shows an example of running the pipeline.
 
-First the data is preprocessed by dropping specified columns and performing dummy encoding. The data is then split into a traning and test set.
+First the feature data is preprocessed by dropping the specified drop columns and target variable and performing one-hot dummy encoding. This step can be omitted if one-hot encoding is not desirable. The target data is separate from the rest of the data for use in the pipeline.
 
-The main model pipeline function is called which will train and evaluate the models for each of the model types specified in the model_param_dict dictionary. The output_label variable is used to specifiy a label to add to each of the output files for the pipeline run.
+The main model pipeline function is called which will train and evaluate the models for each of the model types specified in the model_param_dict dictionary. The output_label variable is used to specify a label to add to each of the output files for the pipeline run. Within the main pipeline code, the data is split into a training and test set (80%/20%).
 
 This pipeline loop is then repeated for each variable in the target_var_list.
 
 ```python
+# run pipeline for all models
 for target_var in target_var_list:
-    # Preprocess the data
-    cols_to_drop = list(set([target_var] + drop_variables + geography_variables))
-    features = preprocess_features(df=main_df, cols_to_drop=cols_to_drop)
-    target_df = preprocess_target(df=main_df, target_col=target_var)
+    # pre-processing
+    # drop cols, convert to set to drop unique cols only
+    cols_to_drop = list(set([target_var] + drop_variables))
+    features = preprocess_features(df=regression_data, cols_to_drop=cols_to_drop)
+    target_df = preprocess_target(df=regression_data, target_col=target_var)
 
-    # Split the data into training and test sets
-    x_train, x_test, y_train, y_test = train_test_split(features, target_df, test_size=0.20, random_state=36)
-
-    # Run the model pipeline
-    model_grid_cv_pipeline(model_param_dict, target_var, target_df, x_train, y_train, x_test, y_test, 
-    output_label="output_label", col_label_map=col_labels)
+    # run model pipeline
+    model_pipeline(
+        model_param_dict=model_param_dict,
+        target_var=target_var,
+        target_df=target_df,
+        feature_df=features,
+        id_col="msoa11cd",
+        original_df=regression_data,
+        output_path="your/output/path",
+        output_label="msoa_demo",
+        col_label_map=col_labels,
+        user_evaluation_model=user_model,
+        shap_id_keys=["E02000266", "E02000503"],
+        custom_pre_processing_steps=pre_processing_pipeline_steps,
+    )
 ```
-
+The final parameters show below are optional. Their usage is described in [Optional steps](#optional-steps). If you do not want to use them simply remove them from the function call and run the pipeline in the same way as above.
+```python
+        col_label_map=col_labels,
+        user_evaluation_model=user_model,
+        shap_id_keys=["E02000266", "E02000503"],
+        custom_pre_processing_steps=pre_processing_pipeline_steps,
+```
 ### Interpretation of results
 
 After running the pipeline, the model evaluation metrics and plots will be saved to the specified output file path. These results will include:
@@ -168,7 +193,11 @@ model_param_dict = {
 ```
 ### Provide custom pre-processing steps
 
-You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from Scikit learn. If this variable is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
+You can add custom pre-processing steps to the pipeline using the pre_processing_pipeline_steps list variable. This works with scalers and imputers from scikit-learn. 
+
+To use custom steps, pass the pre_processing_pipeline_steps to the model_pipeline function using the custom_pre_processing_steps parameter.
+
+If the custom_pre_processing_steps parameter is removed the default pre-processing pipeline will be used: FilterFeatures(), StandardScaler()
 
 ```python
 
@@ -185,11 +214,33 @@ pre_processing_pipeline_steps = [
 The col_labels dictionary can be used to create cleaner or shorter variable names for use in the evaluation plots.
 
 ```python
-
-
 col_labels = {
     "long feature label 1": "Short label 1",
     "long feature label 2": "Short label 2",
     "long feature label 3": "Short label 3"
 }
 ```
+
+### Specify model type to evaluate 
+
+optional - user specified model for evaluation plots. e.g. user_model = "Lasso"
+
+To evaluate a specific model type, pass the user_model to the model_pipeline() function using the user_evaluation_model parameter.
+
+If user_evaluation_model is removed or user_model is left blank, the best performing model will be used for the evaluation plots
+
+```python
+user_model = "Lasso"
+```
+
+### Shap plots - local feature importance
+
+The pipeline can also create shap force plots for specified observations in the data. These plots allow you to understand the contributions of different features to the model's predictions.
+
+To create shap plots set shap_id_keys to a list containing the IDs of the observations you would like to create force plots for. The keys should correspond to values found in the id_col parameter that is passed to the main ml_pipeline function.
+
+See the [shap docs](https://shap.readthedocs.io/en/latest/generated/shap.plots.force.html) for more details.
+
+```python
+shap_id_keys=["E02000266", "E02000503"]
+ ```

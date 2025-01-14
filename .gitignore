@@ -1,4 +1,5 @@
 *mlruns/
+*outputs/
 *.csv
 *.xlsx
 *.xlsm

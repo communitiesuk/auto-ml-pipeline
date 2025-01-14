@@ -20,13 +20,14 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn import set_config
 
 from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
 
 # set config to track feature names after transformations
 set_config(transform_output="pandas")
+
 
 # Define preprocessing functions
 def preprocess_target(df: pd.DataFrame, target_col: str) -> np.ndarray:
@@ -178,8 +179,6 @@ def output_evaluation_metrics_and_plots(
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
-    pd_y_label: str = "",
-    shap_plots: bool = False,
     shap_id_keys: list = [],
     index_mapping: dict = {},
 ) -> None:
@@ -214,8 +213,6 @@ def output_evaluation_metrics_and_plots(
     - output_label (str): A label to add to the output files saved.
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots.
-    - pd_y_label (str, optional): A label the y axis of the PD plots.
-    - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
     - index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
@@ -266,8 +263,6 @@ def output_evaluation_metrics_and_plots(
             output_label,
             output_path,
             col_label_map,
-            pd_y_label,
-            shap_plots,
             shap_id_keys,
             index_mapping,
         )
@@ -294,8 +289,6 @@ def output_evaluation_metrics_and_plots(
                 output_label,
                 output_path,
                 col_label_map,
-                pd_y_label,
-                shap_plots,
                 shap_id_keys,
                 index_mapping,
             )
@@ -327,18 +320,13 @@ def model_pipeline(
     model_param_dict: dict,
     target_var: str,
     target_df: pd.DataFrame,
+    feature_df: pd.DataFrame,
     id_col: str,
     original_df: pd.DataFrame,
-    x_train: pd.DataFrame,
-    y_train: np.ndarray,
-    x_test: pd.DataFrame,
-    y_test: np.ndarray,
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
-    pd_y_label: str = "",
     user_evaluation_model: str = "",
-    shap_plots: bool = False,
     shap_id_keys: list = [],
     custom_pre_processing_steps: list = [],
 ) -> None:
@@ -348,7 +336,8 @@ def model_pipeline(
     Parameters:
     - model_param_dict (dict): Dictionary containing regression models and their hyperparameter grids.
     - target_var (str): Name of the target variable.
-    - target_df (str): Original target df.
+    - target_df (pd.DataFrame): Original target df.
+    - feature_df (pd.DataFrame): Original feature df.
     - id_col (str): Name of the unique id variable for each row in the dataset.
     - original_df (str): Original full feature and target df with id col.
     - x_train (pd.DataFrame): Training input data.
@@ -358,19 +347,20 @@ def model_pipeline(
     - output_label (str): A label to add to the output files saved.
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots
-    - pd_y_label (str, optional): A label the y axis of the PD plots.
     - user_evaluation_model (str, optional): User defined model to use when creating evaluation plots.
       If not defined, evaluation plots will be created for the best performing model.
-    - shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
     - shap_id_keys (list, optional): List for rows to create shap plots for.
     - custom_pre_processing_steps (list, optional): List of user provided steps for custom pre-processing pipeline
 
 
     Returns: None
-    """ 
+    """
+    # create test set of 20%
+    x_train, x_test, y_train, y_test = train_test_split(
+        feature_df, target_df, test_size=0.20, random_state=36
+    )
     # print number of cores available for parallel processing
     print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
-
 
     # initialise evaluation metric checker to track best performing model
     best_r2 = -100
@@ -393,7 +383,7 @@ def model_pipeline(
     for model in model_param_dict.keys():
         model_name = str(model).split("(")[0]
         print(model_name)
-        
+
         # apply custom pre_processing steps, else use default processing pipeline
         if custom_pre_processing_steps:
             steps = custom_pre_processing_steps.copy()
@@ -494,8 +484,6 @@ def model_pipeline(
             output_label,
             output_path,
             col_label_map,
-            pd_y_label,
-            shap_plots,
             shap_id_keys,
             index_mapping,
         )

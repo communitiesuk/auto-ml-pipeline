@@ -45,7 +45,6 @@ def create_partial_dependence_plots(
     output_path: str,
     output_label: str = "",
     col_labels: dict = {},
-    pd_y_label: str = "",
     feature_diff_dict: dict = {},
 ) -> None:
     """
@@ -58,7 +57,6 @@ def create_partial_dependence_plots(
         output_path (str): A path to the directory where the output files will be saved.
         output_label (str, optional): A label to prepend to the output filename. Defaults to "".
         col_labels (dict): A map of shortened feature names for the plots
-        pd_y_label (str, optional): A label the y axis of the PD plots.
         feature_diff_dict (dict): The difference values between the first data point in the and the last data point in the series for each feature.
 
     Returns:
@@ -114,8 +112,10 @@ def create_partial_dependence_plots(
     )
 
     # Create PartialDependenceDisplay for each feature and apply custom formatting
+    # get custom y label if applicable
+    pd_y_label = col_labels.get(target_var, target_var)
     for i, feature in enumerate(features_sorted):
-        # apply formatting after plotting
+        # get custom x labels if applicable
         new_title = col_labels.get(feature, feature)
         axs[i].set_xlabel(new_title)
         if i % n_cols == 0:
@@ -123,7 +123,6 @@ def create_partial_dependence_plots(
         else:
             axs[i].set_ylabel("")
         # add target difference annotation
-
         x_data = axs[i].get_lines()[0].get_xdata()
         y_data = axs[i].get_lines()[0].get_ydata()
         arr = mpatches.FancyArrowPatch(
@@ -607,6 +606,10 @@ def create_shap_plots(
     Returns:
         None
     """
+    # check if shap id keys provided, return if not
+    if not shap_id_keys:
+        print(f"No shap id keys provided")
+        return
     # init for plotting
     shap.initjs()
     model = full_pipeline.best_estimator_.named_steps["model"]
@@ -670,8 +673,6 @@ def create_model_evaluation_plots(
     output_path: str,
     output_label: str = "",
     col_labels: dict = {},
-    pd_y_label: str = "",
-    shap_plots: bool = False,
     shap_id_keys: list = [],
     index_mapping: dict = {},
 ) -> None:
@@ -693,8 +694,6 @@ def create_model_evaluation_plots(
         output_path (str): A path to the directory where the output files will be saved.
         output_label (str, optional): Label to prepend to the output filename. Defaults to "".
         col_labels (dict, optional): Column labels for the features. Defaults to empty dict.
-        pd_y_label (str, optional): Y-axis label for partial dependence plots. Defaults to "".
-        shap_plots (bool, optional): Toggle to create shap plots for rows specified by shap_id_keys list.
         shap_id_keys (list, optional): List for rows to create shap plots for.
         index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
 
@@ -745,20 +744,18 @@ def create_model_evaluation_plots(
         output_label,
         output_path,
         col_labels,
-        pd_y_label,
         feature_diff_dict,
     )
-    if shap_plots:
-        create_shap_plots(
-            id_col,
-            original_df,
-            x_test,
-            x_train,
-            full_pipeline,
-            target_var,
-            shap_id_keys,
-            output_label,
-            output_path,
-            index_mapping,
-        )
+    create_shap_plots(
+        id_col,
+        original_df,
+        x_test,
+        x_train,
+        full_pipeline,
+        target_var,
+        shap_id_keys,
+        output_label,
+        output_path,
+        index_mapping,
+    )
     return
