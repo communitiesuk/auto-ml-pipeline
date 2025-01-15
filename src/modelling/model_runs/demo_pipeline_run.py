@@ -27,8 +27,9 @@ from src.modelling.pipeline.ml_pipeline import (
 
 
 # demonstration model run using ONS Subnational indicator data to predict life satisfaction score at LAD level
+# The ONS have collated subnational metrics for local authorities which we can read in and use as an example test case.
 # data available from "https://www.ons.gov.uk/visualisations/dvc1786/machine_readable.csv"
-ons_ess_data = pd.read_csv("data/processed/machine_readable.csv", skiprows=1)
+ons_ess_data = pd.read_csv("https://www.ons.gov.uk/visualisations/dvc1786/machine_readable.csv", skiprows=1, storage_options = {'User-Agent': 'Mozilla/5.0'})
 # filtering and tranforming data for use in modelling pipeline
 indicators = [
     "Gross disposable household income per head",
