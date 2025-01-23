@@ -30,7 +30,7 @@ For any suggestions or feedback, please contact sean.ogara@communities.gov.uk, o
 In the terminal run: 
 
 ```
-conda env create --file environment.yml
+conda env create --file environment.yaml
 ```
 
 And then activate the virtual environment by running:
