@@ -16,7 +16,7 @@ import numpy as np
 import mlflow
 import mlflow.sklearn
 from joblib import effective_n_jobs
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, is_classifier, is_regressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score
@@ -248,6 +248,7 @@ def output_evaluation_metrics_and_plots(
     output.drop_duplicates().to_csv(filename, index=False)
     # create evaluation plots
     feature_importance_model = full_pipeline.best_estimator_.named_steps["model"]
+    """     
     if model_name == user_evaluation_model:
         print("Creating evaluation plots")
         create_model_evaluation_plots(
@@ -291,7 +292,8 @@ def output_evaluation_metrics_and_plots(
                 col_label_map,
                 shap_id_keys,
                 index_mapping,
-            )
+            ) 
+        """
     return
 
 
@@ -362,12 +364,7 @@ def model_pipeline(
     # print number of cores available for parallel processing
     print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
 
-    # initialise evaluation metric checker to track best performing model
-    best_r2 = -100
-    # final model name to trigger evaluation chart plotting
-    final_model = str(list(model_param_dict.keys())[-1]).split("(")[0]
-
-    # Create a mapping dictionary for Shap plots: original_df index -> (x_train or x_test, index)
+     # Create a mapping dictionary for Shap plots: original_df index -> (x_train or x_test, index)
     # Get the indices for the train and test sets
     train_indices = x_train.index
     test_indices = x_test.index
@@ -380,7 +377,35 @@ def model_pipeline(
     for idx in test_indices:
         index_mapping[idx] = ("test", test_indices.get_loc(idx))
 
+    # initialise evaluation metric checkers to track best performing model (r2 for regression, f1 for binary classification)
+    # final model name to trigger evaluation chart plotting
+    final_model = str(list(model_param_dict.keys())[-1]).split("(")[0]
+
     for model in model_param_dict.keys():
+        # check if classifer, if not regression
+        if is_classifier(model):
+            scoring_metrics = ["f1_score", "accuracy"]
+            best_score = 0
+            eval_metrics = {
+                "f1_score": [], 
+                "accuracy": [],
+                "precision": [],
+                "recall": []
+            }
+        elif is_regressor(model):
+            scoring_metrics = ["neg_root_mean_squared_error", "r2"]
+            best_score = -100
+            eval_metrics = {
+                "train_rmse": [],
+                "train_rmse_sd": [],
+                "test_rmse": [],
+                "train_r2": [],
+                "train_r2_sd": [],
+                "test_r2": []
+            }
+        else:
+            raise Exception("Model type not recognised")
+
         model_name = str(model).split("(")[0]
         print(model_name)
 
@@ -408,8 +433,8 @@ def model_pipeline(
                 model_param_dict[model],
                 cv=5,
                 n_iter=150,
-                scoring=["neg_root_mean_squared_error", "r2"],
-                refit="neg_root_mean_squared_error",
+                scoring=scoring_metrics,
+                refit=scoring_metrics[0],
                 return_train_score=True,
                 verbose=2,
                 n_jobs=-1,
@@ -439,21 +464,17 @@ def model_pipeline(
 
             # evaluate model
             (
-                train_rmse,
-                train_rmse_sd,
-                test_rmse,
-                train_r2,
-                train_r2_sd,
-                test_r2,
+                eval_metrics,
                 train_predictions,
                 test_predictions,
             ) = evaluate_model(
                 full_pipeline, best_model, x_train, y_train, x_test, y_test
             )
 
-        # keep track of best performing model in terms of r2 for eval plots
-        if test_r2 > best_r2:
-            best_r2 = test_r2
+        # keep track of best performing model in terms of r2 or f1 score for eval plots
+        test_score = eval_metrics[scoring_metrics[0]]
+        if test_score > best_score:
+            best_score = test_score
             best_evaluation_model = full_pipeline
             # now just input into eval metrics function
 
@@ -475,12 +496,7 @@ def model_pipeline(
             y_test,
             train_predictions,
             test_predictions,
-            train_rmse,
-            train_rmse_sd,
-            test_rmse,
-            train_r2,
-            train_r2_sd,
-            test_r2,
+            eval_metrics,
             output_label,
             output_path,
             col_label_map,
