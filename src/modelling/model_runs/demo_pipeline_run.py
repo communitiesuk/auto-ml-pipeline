@@ -1,5 +1,4 @@
 # fixing directory to root of project
-from tokenize import Triple
 import git
 import os
 import sys
