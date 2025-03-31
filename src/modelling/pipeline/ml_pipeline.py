@@ -19,7 +19,7 @@ from joblib import effective_n_jobs
 from sklearn.base import BaseEstimator, TransformerMixin, is_classifier, is_regressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, f1_score, accuracy_score, precision_score, recall_score
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn import set_config
 
@@ -124,30 +124,35 @@ def evaluate_model(
     best_model_idx = full_pipeline.best_index_
     # Access cv_results_ dictionary
     cv_results = full_pipeline.cv_results_
-    # avg training RMSE from CV test sets
-    train_rmse = -cv_results["mean_test_neg_root_mean_squared_error"][best_model_idx]
-    train_rmse_sd = cv_results["std_test_neg_root_mean_squared_error"][best_model_idx]
-    # training predictions for eval plots
+    print(cv_results)
+    eval_metrics = {}
+    
     train_predictions = best_model.predict(x_train)
-    # avg training R2 from CV test sets
-    train_r2 = cv_results["mean_test_r2"][best_model_idx]
-    train_r2_sd = cv_results["std_test_r2"][best_model_idx]
-    # test on test data - RMSE
     test_predictions = best_model.predict(x_test)
-    test_mse = mean_squared_error(y_test, test_predictions)
-    test_rmse = np.sqrt(test_mse)
-    # test R^2
-    test_r2 = r2_score(y_test, test_predictions)
-    # log test performance to MLflow
-    mlflow.log_metric("test_r2", test_r2)
-    mlflow.log_metric("test_rmse", test_rmse)
+
+    if is_classifier(best_model):
+        eval_metrics["train_f1"] = cv_results["mean_test_f1_macro"][best_model_idx]
+        eval_metrics["train_accuracy"] = cv_results["mean_test_accuracy"][best_model_idx]
+        eval_metrics["test_f1"] = f1_score(y_test, test_predictions)
+        eval_metrics["test_accuracy"] = accuracy_score(y_test, test_predictions)
+        eval_metrics["test_precision"] = precision_score(y_test, test_predictions) 
+        eval_metrics["test_recall"] = recall_score(y_test, test_predictions)
+        # add ml flow bit
+    else:
+        # avg training RMSE from CV test sets
+        eval_metrics["train_rmse"] = -cv_results["mean_test_neg_root_mean_squared_error"][best_model_idx]
+        eval_metrics["train_rmse_sd"] = cv_results["std_test_neg_root_mean_squared_error"][best_model_idx]
+        # avg training R2 from CV test sets
+        eval_metrics["train_r2"] = cv_results["mean_test_r2"][best_model_idx]
+        eval_metrics["train_r2_std"] = cv_results["std_test_r2"][best_model_idx]
+        # test on test data - RMSE
+        eval_metrics["test_rmse"] = np.sqrt(mean_squared_error(y_test, test_predictions)) 
+        eval_metrics["test_r2"] = r2_score(y_test, test_predictions)
+        # log test performance to MLflow
+        mlflow.log_metric("test_r2", eval_metrics["test_r2"])
+        mlflow.log_metric("test_rmse", eval_metrics["test_rmse"])
     return (
-        train_rmse,
-        train_rmse_sd,
-        test_rmse,
-        train_r2,
-        train_r2_sd,
-        test_r2,
+        eval_metrics,
         train_predictions,
         test_predictions,
     )
@@ -170,12 +175,7 @@ def output_evaluation_metrics_and_plots(
     y_test: np.ndarray,
     train_predictions: np.ndarray,
     test_predictions: np.ndarray,
-    train_rmse: float,
-    train_rmse_sd: float,
-    test_rmse: float,
-    train_r2: float,
-    train_r2_sd: float,
-    test_r2: float,
+    eval_metrics,
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
@@ -233,16 +233,25 @@ def output_evaluation_metrics_and_plots(
         "time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
         "model": model_name,
         "params": str(best_params),
-        "target_variable": target_var,
-        "target_mean": target_df.mean(),
-        "train_RMSE": train_rmse.round(2),
-        "train_RMSE_sd": train_rmse_sd.round(3),
-        "test_RMSE": test_rmse.round(2),
-        "test_RMSE_perc_mean": (test_rmse / target_df.mean()).round(2),
-        "train_R^2": train_r2.round(2),
-        "train_R^2_sd": train_r2_sd.round(2),
-        "test_R^2": round(test_r2, 2),
-    }
+        "target_variable": target_var
+        }
+    if is_classifier(full_pipeline.best_estimator_.named_steps["model"]):
+        model_evaluation_dict.update(eval_metrics)
+    else:
+        model_evaluation_dict = {
+            "time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+            "model": model_name,
+            "params": str(best_params),
+            "target_variable": target_var,
+            "target_mean": target_df.mean(),
+            "train_RMSE": train_rmse.round(2),
+            "train_RMSE_sd": train_rmse_sd.round(3),
+            "test_RMSE": test_rmse.round(2),
+            "test_RMSE_perc_mean": (test_rmse / target_df.mean()).round(2),
+            "train_R^2": train_r2.round(2),
+            "train_R^2_sd": train_r2_sd.round(2),
+            "test_R^2": round(test_r2, 2),
+        }
     model_evaluation_df = pd.DataFrame([model_evaluation_dict])
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
     output.drop_duplicates().to_csv(filename, index=False)
@@ -384,25 +393,15 @@ def model_pipeline(
     for model in model_param_dict.keys():
         # check if classifer, if not regression
         if is_classifier(model):
-            scoring_metrics = ["f1_score", "accuracy"]
+            scoring_metrics = ["f1_macro", "accuracy"]
+            best_scorer = "test_f1"
             best_score = 0
-            eval_metrics = {
-                "f1_score": [], 
-                "accuracy": [],
-                "precision": [],
-                "recall": []
-            }
+
         elif is_regressor(model):
             scoring_metrics = ["neg_root_mean_squared_error", "r2"]
+            best_scorer = "test_r2"
             best_score = -100
-            eval_metrics = {
-                "train_rmse": [],
-                "train_rmse_sd": [],
-                "test_rmse": [],
-                "train_r2": [],
-                "train_r2_sd": [],
-                "test_r2": []
-            }
+
         else:
             raise Exception("Model type not recognised")
 
@@ -472,7 +471,7 @@ def model_pipeline(
             )
 
         # keep track of best performing model in terms of r2 or f1 score for eval plots
-        test_score = eval_metrics[scoring_metrics[0]]
+        test_score = eval_metrics[best_scorer]
         if test_score > best_score:
             best_score = test_score
             best_evaluation_model = full_pipeline
