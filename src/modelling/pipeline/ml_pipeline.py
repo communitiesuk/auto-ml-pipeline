@@ -24,6 +24,7 @@ from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn import set_config
 
 from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
+from src.visualise.classification_evaluation_plots import create_classification_evaluation_plots
 
 # set config to track feature names after transformations
 set_config(transform_output="pandas")
@@ -179,7 +180,7 @@ def output_evaluation_metrics_and_plots(
     y_test: np.ndarray,
     train_predictions: np.ndarray,
     test_predictions: np.ndarray,
-    eval_metrics,
+    eval_metrics: dict,
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
@@ -239,8 +240,31 @@ def output_evaluation_metrics_and_plots(
         "params": str(best_params),
         "target_variable": target_var
         }
+    # create evaluation plots
+    feature_importance_model = full_pipeline.best_estimator_.named_steps["model"]
+
     if is_classifier(full_pipeline.best_estimator_.named_steps["model"]):
         model_evaluation_dict.update(eval_metrics)
+        print("Creating evaluation plots")
+        print(x_test)
+        create_classification_evaluation_plots(
+            full_pipeline,
+            feature_importance_model,
+            target_var,
+            id_col,
+            original_df,
+            x_train,
+            y_train,
+            x_test,
+            y_test,
+            train_predictions,
+            test_predictions,
+            output_label,
+            output_path,
+            col_label_map,
+            shap_id_keys,
+            index_mapping,
+        )
     else:
         model_evaluation_dict = {
             "time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
@@ -259,8 +283,6 @@ def output_evaluation_metrics_and_plots(
     model_evaluation_df = pd.DataFrame([model_evaluation_dict])
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
     output.drop_duplicates().to_csv(filename, index=False)
-    # create evaluation plots
-    feature_importance_model = full_pipeline.best_estimator_.named_steps["model"]
     """     
     if model_name == user_evaluation_model:
         print("Creating evaluation plots")
@@ -268,6 +290,8 @@ def output_evaluation_metrics_and_plots(
             full_pipeline,
             feature_importance_model,
             target_var,
+            id_col,
+            original_df,
             x_train,
             y_train,
             x_test,
@@ -374,6 +398,9 @@ def model_pipeline(
     x_train, x_test, y_train, y_test = train_test_split(
         feature_df, target_df, test_size=0.20, random_state=36
     )
+
+    print(x_train)
+    print(x_test)
     # print number of cores available for parallel processing
     print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
 
