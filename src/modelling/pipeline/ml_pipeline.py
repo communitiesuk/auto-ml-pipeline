@@ -124,12 +124,12 @@ def evaluate_model(
     best_model_idx = full_pipeline.best_index_
     # Access cv_results_ dictionary
     cv_results = full_pipeline.cv_results_
-    print(cv_results)
-    eval_metrics = {}
-    
+    # model predictions
     train_predictions = best_model.predict(x_train)
     test_predictions = best_model.predict(x_test)
-
+    # dictionary to store eval metrics
+    eval_metrics = {}
+    # if classifier, output classification eval metrics
     if is_classifier(best_model):
         eval_metrics["train_f1"] = cv_results["mean_test_f1_macro"][best_model_idx]
         eval_metrics["train_accuracy"] = cv_results["mean_test_accuracy"][best_model_idx]
@@ -138,14 +138,18 @@ def evaluate_model(
         eval_metrics["test_precision"] = precision_score(y_test, test_predictions) 
         eval_metrics["test_recall"] = recall_score(y_test, test_predictions)
         # add ml flow bit
+        # log test performance to MLflow
+        mlflow.log_metric("test_accuracy", eval_metrics["test_accuracy"])
+        mlflow.log_metric("test_f1", eval_metrics["test_f1"])
+        mlflow.log_metric("test_precision", eval_metrics["test_precision"])
+        mlflow.log_metric("test_recall", eval_metrics["test_recall"])
     else:
-        # avg training RMSE from CV test sets
+        # else output regression metrics
+        # training metrics from CV test sets
         eval_metrics["train_rmse"] = -cv_results["mean_test_neg_root_mean_squared_error"][best_model_idx]
         eval_metrics["train_rmse_sd"] = cv_results["std_test_neg_root_mean_squared_error"][best_model_idx]
-        # avg training R2 from CV test sets
         eval_metrics["train_r2"] = cv_results["mean_test_r2"][best_model_idx]
         eval_metrics["train_r2_std"] = cv_results["std_test_r2"][best_model_idx]
-        # test on test data - RMSE
         eval_metrics["test_rmse"] = np.sqrt(mean_squared_error(y_test, test_predictions)) 
         eval_metrics["test_r2"] = r2_score(y_test, test_predictions)
         # log test performance to MLflow
