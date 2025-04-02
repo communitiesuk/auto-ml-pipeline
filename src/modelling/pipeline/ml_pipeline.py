@@ -132,12 +132,12 @@ def evaluate_model(
     eval_metrics = {}
     # if classifier, output classification eval metrics
     if is_classifier(best_model):
-        eval_metrics["train_f1"] = cv_results["mean_test_f1_macro"][best_model_idx]
-        eval_metrics["train_accuracy"] = cv_results["mean_test_accuracy"][best_model_idx]
-        eval_metrics["test_f1"] = f1_score(y_test, test_predictions)
-        eval_metrics["test_accuracy"] = accuracy_score(y_test, test_predictions)
-        eval_metrics["test_precision"] = precision_score(y_test, test_predictions) 
-        eval_metrics["test_recall"] = recall_score(y_test, test_predictions)
+        eval_metrics["train_f1"] = round(cv_results["mean_test_f1_macro"][best_model_idx], 2)
+        eval_metrics["train_accuracy"] = round(cv_results["mean_test_accuracy"][best_model_idx], 2)
+        eval_metrics["test_f1"] = round(f1_score(y_test, test_predictions), 2)
+        eval_metrics["test_accuracy"] = round(accuracy_score(y_test, test_predictions), 2)
+        eval_metrics["test_precision"] = round(precision_score(y_test, test_predictions), 2)
+        eval_metrics["test_recall"] = round(recall_score(y_test, test_predictions), 2)
         # add ml flow bit
         # log test performance to MLflow
         mlflow.log_metric("test_accuracy", eval_metrics["test_accuracy"])
@@ -245,8 +245,7 @@ def output_evaluation_metrics_and_plots(
 
     if is_classifier(full_pipeline.best_estimator_.named_steps["model"]):
         model_evaluation_dict.update(eval_metrics)
-        print("Creating evaluation plots")
-        print(x_test)
+        print("Creating classification evaluation plots")
         create_classification_evaluation_plots(
             full_pipeline,
             feature_importance_model,
@@ -399,8 +398,6 @@ def model_pipeline(
         feature_df, target_df, test_size=0.20, random_state=36
     )
 
-    print(x_train)
-    print(x_test)
     # print number of cores available for parallel processing
     print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
 

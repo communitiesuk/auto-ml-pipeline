@@ -232,7 +232,7 @@ def create_feature_importance_plot(
 
 
 def make_confusion_matrix(cf,
-                          group_names=None,
+                          group_names=["True Neg","False Pos","False Neg","True Pos"],
                           categories='auto',
                           count=True,
                           percent=True,
