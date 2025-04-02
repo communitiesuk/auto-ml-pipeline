@@ -147,12 +147,12 @@ def evaluate_model(
     else:
         # else output regression metrics
         # training metrics from CV test sets
-        eval_metrics["train_rmse"] = -cv_results["mean_test_neg_root_mean_squared_error"][best_model_idx]
-        eval_metrics["train_rmse_sd"] = cv_results["std_test_neg_root_mean_squared_error"][best_model_idx]
-        eval_metrics["train_r2"] = cv_results["mean_test_r2"][best_model_idx]
-        eval_metrics["train_r2_std"] = cv_results["std_test_r2"][best_model_idx]
-        eval_metrics["test_rmse"] = np.sqrt(mean_squared_error(y_test, test_predictions)) 
-        eval_metrics["test_r2"] = r2_score(y_test, test_predictions)
+        eval_metrics["train_rmse"] = round(-cv_results["mean_test_neg_root_mean_squared_error"][best_model_idx], 2)
+        eval_metrics["train_rmse_sd"] = round(cv_results["std_test_neg_root_mean_squared_error"][best_model_idx], 3)
+        eval_metrics["train_r2"] = round(cv_results["mean_test_r2"][best_model_idx], 2)
+        eval_metrics["train_r2_sd"] = round(cv_results["std_test_r2"][best_model_idx], 2)
+        eval_metrics["test_rmse"] = round(np.sqrt(mean_squared_error(y_test, test_predictions)), 2)
+        eval_metrics["test_r2"] = round(r2_score(y_test, test_predictions), 2)
         # log test performance to MLflow
         mlflow.log_metric("test_r2", eval_metrics["test_r2"])
         mlflow.log_metric("test_rmse", eval_metrics["test_rmse"])
@@ -265,20 +265,11 @@ def output_evaluation_metrics_and_plots(
             index_mapping,
         )
     else:
-        model_evaluation_dict = {
-            "time": datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
-            "model": model_name,
-            "params": str(best_params),
-            "target_variable": target_var,
+        model_evaluation_dict.update(eval_metrics)
+        model_evaluation_dict.update({
             "target_mean": target_df.mean(),
-            "train_RMSE": train_rmse.round(2),
-            "train_RMSE_sd": train_rmse_sd.round(3),
-            "test_RMSE": test_rmse.round(2),
-            "test_RMSE_perc_mean": (test_rmse / target_df.mean()).round(2),
-            "train_R^2": train_r2.round(2),
-            "train_R^2_sd": train_r2_sd.round(2),
-            "test_R^2": round(test_r2, 2),
-        }
+            "test_RMSE_perc_mean": (eval_metrics["test_rmse"] / target_df.mean()).round(2),
+        })
     model_evaluation_df = pd.DataFrame([model_evaluation_dict])
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
     output.drop_duplicates().to_csv(filename, index=False)
