@@ -12,11 +12,13 @@ from typing import Any, Tuple, Dict
 import shap
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import plotly.express as px
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import plotly.graph_objects as go
 from sklearn import tree
+from sklearn.metrics import confusion_matrix
 from sklearn.inspection import (
     PartialDependenceDisplay,
     permutation_importance,
@@ -229,6 +231,130 @@ def create_feature_importance_plot(
     return
 
 
+def make_confusion_matrix(cf,
+                          group_names=None,
+                          categories='auto',
+                          count=True,
+                          percent=True,
+                          cbar=True,
+                          xyticks=True,
+                          xyplotlabels=True,
+                          sum_stats=True,
+                          figsize=None,
+                          cmap='Blues',
+                          title=None):
+    '''
+    This function will make a pretty plot of an sklearn Confusion Matrix cm using a Seaborn heatmap visualization.
+
+    Arguments
+    ---------
+    cf:            confusion matrix to be passed in
+
+    group_names:   List of strings that represent the labels row by row to be shown in each square.
+
+    categories:    List of strings containing the categories to be displayed on the x,y axis. Default is 'auto'
+
+    count:         If True, show the raw number in the confusion matrix. Default is True.
+
+    normalize:     If True, show the proportions for each category. Default is True.
+
+    cbar:          If True, show the color bar. The cbar values are based off the values in the confusion matrix.
+                   Default is True.
+
+    xyticks:       If True, show x and y ticks. Default is True.
+
+    xyplotlabels:  If True, show 'True Label' and 'Predicted Label' on the figure. Default is True.
+
+    sum_stats:     If True, display summary statistics below the figure. Default is True.
+
+    figsize:       Tuple representing the figure size. Default will be the matplotlib rcParams value.
+
+    cmap:          Colormap of the values displayed from matplotlib.pyplot.cm. Default is 'Blues'
+                   See http://matplotlib.org/examples/color/colormaps_reference.html
+                   
+    title:         Title for the heatmap. Default is None.
+
+    '''
+
+
+    # CODE TO GENERATE TEXT INSIDE EACH SQUARE
+    blanks = ['' for i in range(cf.size)]
+
+    if group_names and len(group_names)==cf.size:
+        group_labels = ["{}\n".format(value) for value in group_names]
+    else:
+        group_labels = blanks
+
+    if count:
+        group_counts = ["{0:0.0f}\n".format(value) for value in cf.flatten()]
+    else:
+        group_counts = blanks
+
+    if percent:
+        group_percentages = ["{0:.2%}".format(value) for value in cf.flatten()/np.sum(cf)]
+    else:
+        group_percentages = blanks
+
+    box_labels = [f"{v1}{v2}{v3}".strip() for v1, v2, v3 in zip(group_labels,group_counts,group_percentages)]
+    box_labels = np.asarray(box_labels).reshape(cf.shape[0],cf.shape[1])
+
+
+    # CODE TO GENERATE SUMMARY STATISTICS & TEXT FOR SUMMARY STATS
+    if sum_stats:
+        #Accuracy is sum of diagonal divided by total observations
+        accuracy  = np.trace(cf) / float(np.sum(cf))
+
+        #if it is a binary confusion matrix, show some more stats
+        if len(cf)==2:
+            #Metrics for Binary Confusion Matrices
+            precision = cf[1,1] / sum(cf[:,1])
+            recall    = cf[1,1] / sum(cf[1,:])
+            f1_score  = 2*precision*recall / (precision + recall)
+            stats_text = "\n\nAccuracy={:0.3f}\nPrecision={:0.3f}\nRecall={:0.3f}\nF1 Score={:0.3f}".format(
+                accuracy,precision,recall,f1_score)
+        else:
+            stats_text = "\n\nAccuracy={:0.3f}".format(accuracy)
+    else:
+        stats_text = ""
+
+
+    # SET FIGURE PARAMETERS ACCORDING TO OTHER ARGUMENTS
+    if figsize==None:
+        #Get default figure size if not set
+        figsize = plt.rcParams.get('figure.figsize')
+
+    if xyticks==False:
+        #Do not show categories if xyticks is False
+        categories=False
+
+
+    # MAKE THE HEATMAP VISUALIZATION
+    plt.figure(figsize=figsize)
+    sns.heatmap(cf,annot=box_labels,fmt="",cmap=cmap,cbar=cbar,xticklabels=categories,yticklabels=categories)
+
+    if xyplotlabels:
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label' + stats_text)
+    else:
+        plt.xlabel(stats_text)
+    
+    if title:
+        plt.title(title)
+    plt.savefig("confusion_test.png")
+    return
+
+def create_confusion_matrix(
+        y_test,
+        test_predictions,
+        original_df,
+        output_label,
+        output_path,
+    ):
+    cf_matrix = confusion_matrix(y_test, test_predictions)
+    make_confusion_matrix(cf_matrix)
+    return
+
+
 def create_permutation_feature_importance_plot(
     model: Any,
     x_test: pd.DataFrame,
@@ -343,199 +469,6 @@ def add_original_indices_test_train(
     return merged
 
 
-def create_actual_vs_predicted_scatter(
-    y_train: pd.Series,
-    y_test: pd.Series,
-    train_predictions: pd.Series,
-    test_predictions: pd.Series,
-    id_col: str,
-    original_df: pd.DataFrame,
-    target_var: str,
-    output_path: str,
-    output_label: str = "",
-    index_mapping: dict = {},
-) -> None:
-    """
-    Generates an actual vs. predicted scatter plot for both training and testing datasets.
-
-    Args:
-        y_train (pd.Series): Actual values for the training data.
-        y_test (pd.Series): Actual values for the test data.
-        train_predictions (pd.Series): Predicted values for the training data.
-        test_predictions (pd.Series): Predicted values for the test data.
-        id_col: The column name containing the unique IDs.
-        original_df: The original dataframe containing all data.
-        target_var (str): The name of the target variable.
-        output_path (str): A path to the directory where the output files will be saved.
-        output_label (str, optional): Label to prepend to the output filename. Defaults to "".
-        index_mapping (dict, optional): a mapping dictionary: original_df index -> (x_train or x_test, index)
-
-    Returns:
-        None
-    """
-    # get the original location codes/names to add as hover labels
-    if id_col:
-        y_test = add_original_indices_test_train(
-            y_test, "test", original_df, id_col, index_mapping
-        )
-        y_train = add_original_indices_test_train(
-            y_train, "train", original_df, id_col, index_mapping
-        )
-    # create actual vs predicted plot
-    actual_vs_predicted_test = pd.merge(
-        left=y_test,
-        right=pd.DataFrame(data={"Predicted": test_predictions}),
-        left_index=True,
-        right_index=True,
-    )
-    actual_vs_predicted_test["Type"] = "Test"
-    actual_vs_predicted_train = pd.merge(
-        left=y_train,
-        right=pd.DataFrame(data={"Predicted": train_predictions}),
-        left_index=True,
-        right_index=True,
-    )
-    actual_vs_predicted_train["Type"] = "Train"
-    actual_vs_predicted = pd.concat(
-        [actual_vs_predicted_test, actual_vs_predicted_train], axis=0
-    )
-    fig = scatter_chart(
-        data=actual_vs_predicted,
-        x_var="Actual",
-        y_var="Predicted",
-        x_label="Actual",
-        y_label="Predicted",
-        hover_labels=id_col,
-        title="Predicted vs Actual Values " + target_var,
-        colour_col="Type",
-        trend_line=None,
-    )
-    # add y = x line
-    # find start and end coords for the y = x line by finding the min and max Actual values from the training set
-    x_min = pd.concat(
-        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
-    ).min()
-    x_max = pd.concat(
-        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
-    ).max()
-    fig.update_traces(opacity=0.7)
-    fig.add_trace(
-        go.Scatter(
-            x=[x_min, x_max],
-            y=[x_min, x_max],
-            mode="lines",
-            line=go.scatter.Line(color="gray"),
-            name="y = x",
-            line_dash="dash",
-            showlegend=True,
-        )
-    )
-    fig.update_layout(
-        height=750,
-        width=1000,
-    )
-    fig.write_html(
-        f"{output_path}/{output_label}_actual_vs_predicted_scatter_{target_var}.html"
-    )
-    return
-
-
-def create_residuals_plot(
-    y_train: pd.Series,
-    y_test: pd.Series,
-    train_predictions: pd.Series,
-    test_predictions: pd.Series,
-    id_col: str,
-    original_df: pd.DataFrame,
-    target_var: str,
-    output_path: str,
-    output_label: str = "",
-    index_mapping: dict = {},
-) -> None:
-    """
-    Generates a residuals plot for both training and testing datasets.
-
-    Args:
-        y_train (pd.Series): Actual values for the training data.
-        y_test (pd.Series): Actual values for the test data.
-        train_predictions (pd.Series): Predicted values for the training data.
-        test_predictions (pd.Series): Predicted values for the test data.
-        target_var (str): The name of the target variable.
-        output_path (str): A path to the directory where the output files will be saved.
-        output_label (str, optional): Label to prepend to the output filename. Defaults to "".
-
-    Returns:
-        None
-    """
-    # get the original location codes/names to add as hover labels
-    if id_col:
-        y_test = add_original_indices_test_train(
-            y_test, "test", original_df, id_col, index_mapping
-        )
-        y_train = add_original_indices_test_train(
-            y_train, "train", original_df, id_col, index_mapping
-        )
-    # create actual vs predicted plot
-    actual_vs_predicted_test = pd.merge(
-        left=y_test,
-        right=pd.DataFrame(data={"Predicted": test_predictions}),
-        left_index=True,
-        right_index=True,
-    )
-    actual_vs_predicted_test["Residuals"] = (
-        actual_vs_predicted_test["Predicted"] - actual_vs_predicted_test["Actual"]
-    )
-    actual_vs_predicted_test["Type"] = "Test"
-    actual_vs_predicted_train = pd.merge(
-        left=y_train,
-        right=pd.DataFrame(data={"Predicted": train_predictions}),
-        left_index=True,
-        right_index=True,
-    )
-    actual_vs_predicted_train["Residuals"] = (
-        actual_vs_predicted_train["Predicted"] - actual_vs_predicted_train["Actual"]
-    )
-    actual_vs_predicted_train["Type"] = "Train"
-    actual_vs_predicted = pd.concat(
-        [actual_vs_predicted_test, actual_vs_predicted_train], axis=0
-    )
-    fig = scatter_chart(
-        data=actual_vs_predicted,
-        x_var="Actual",
-        y_var="Residuals",
-        x_label="Actual",
-        y_label="Residuals",
-        hover_labels=id_col,
-        title="Residuals vs Actual Values " + target_var,
-        colour_col="Type",
-        trend_line=None,
-    )
-    # add y = 0 line
-    # find start and end x coords for the y = 0 line by finding the min and max Actual values from the training set
-    x_min = pd.concat(
-        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
-    ).min()
-    x_max = pd.concat(
-        [actual_vs_predicted_train["Actual"], actual_vs_predicted_test["Actual"]]
-    ).max()
-    fig.update_traces(opacity=0.7)
-    fig.add_trace(
-        go.Scatter(
-            x=[x_min, x_max],
-            y=[0, 0],
-            mode="lines",
-            line=go.scatter.Line(color="gray"),
-            name="y = 0",
-            line_dash="dash",
-            showlegend=True,
-        )
-    )
-    fig.update_layout(
-        height=750,
-        width=1000,
-    )
-    fig.write_html(f"{output_path}/{output_label}_residuals_scatter_{target_var}.html")
-    return
 
 
 def create_tree_plot(
@@ -718,29 +651,12 @@ def create_classification_evaluation_plots(
         output_label,
         output_path,
     )
-    create_actual_vs_predicted_scatter(
-        y_train,
+    create_confusion_matrix(
         y_test,
-        train_predictions,
         test_predictions,
-        id_col,
         original_df,
-        target_var,
         output_label,
         output_path,
-        index_mapping,
-    )
-    create_residuals_plot(
-        y_train,
-        y_test,
-        train_predictions,
-        test_predictions,
-        id_col,
-        original_df,
-        target_var,
-        output_label,
-        output_path,
-        index_mapping,
     )
     create_partial_dependence_plots(
         full_pipeline,
