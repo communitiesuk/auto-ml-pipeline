@@ -658,7 +658,7 @@ def create_shap_plots(
     return
 
 
-def create_model_evaluation_plots(
+def create_regression_evaluation_plots(
     full_pipeline: Any,
     model: Any,
     target_var: str,

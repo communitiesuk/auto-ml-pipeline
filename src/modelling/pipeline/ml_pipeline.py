@@ -23,7 +23,7 @@ from sklearn.metrics import mean_squared_error, r2_score, f1_score, accuracy_sco
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn import set_config
 
-from src.visualise.regression_evaluation_plots import create_model_evaluation_plots
+from src.visualise.regression_evaluation_plots import create_regression_evaluation_plots
 from src.visualise.classification_evaluation_plots import create_classification_evaluation_plots
 
 # set config to track feature names after transformations
@@ -246,24 +246,7 @@ def output_evaluation_metrics_and_plots(
     if is_classifier(full_pipeline.best_estimator_.named_steps["model"]):
         model_evaluation_dict.update(eval_metrics)
         print("Creating classification evaluation plots")
-        create_classification_evaluation_plots(
-            full_pipeline,
-            feature_importance_model,
-            target_var,
-            id_col,
-            original_df,
-            x_train,
-            y_train,
-            x_test,
-            y_test,
-            train_predictions,
-            test_predictions,
-            output_label,
-            output_path,
-            col_label_map,
-            shap_id_keys,
-            index_mapping,
-        )
+
     else:
         model_evaluation_dict.update(eval_metrics)
         model_evaluation_dict.update({
@@ -273,38 +256,13 @@ def output_evaluation_metrics_and_plots(
     model_evaluation_df = pd.DataFrame([model_evaluation_dict])
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
     output.drop_duplicates().to_csv(filename, index=False)
-    """     
+    
     if model_name == user_evaluation_model:
-        print("Creating evaluation plots")
-        create_model_evaluation_plots(
-            full_pipeline,
-            feature_importance_model,
-            target_var,
-            id_col,
-            original_df,
-            x_train,
-            y_train,
-            x_test,
-            y_test,
-            train_predictions,
-            test_predictions,
-            output_label,
-            output_path,
-            col_label_map,
-            shap_id_keys,
-            index_mapping,
-        )
-    # if no user defined model then create plots for best performing model
-    elif user_evaluation_model == "":
-        if model_name == final_model:
-            best_model = best_evaluation_model.best_estimator_.named_steps["model"]
-            train_predictions = best_evaluation_model.predict(x_train)
-            test_predictions = best_evaluation_model.predict(x_test)
-            print("The best performing model is: " + str(best_model))
-            print("Creating evaluation plots")
-            create_model_evaluation_plots(
-                best_evaluation_model,
-                best_model,
+        if is_classifier(feature_importance_model):
+            print("Creating classification evaluation plots")
+            create_classification_evaluation_plots(
+                full_pipeline,
+                feature_importance_model,
                 target_var,
                 id_col,
                 original_df,
@@ -319,8 +277,74 @@ def output_evaluation_metrics_and_plots(
                 col_label_map,
                 shap_id_keys,
                 index_mapping,
-            ) 
-        """
+            )
+        else:
+            print("Creating regression plots")
+            create_regression_evaluation_plots(
+                full_pipeline,
+                feature_importance_model,
+                target_var,
+                id_col,
+                original_df,
+                x_train,
+                y_train,
+                x_test,
+                y_test,
+                train_predictions,
+                test_predictions,
+                output_label,
+                output_path,
+                col_label_map,
+                shap_id_keys,
+                index_mapping,
+            )
+    # if no user defined model then create plots for best performing model
+    elif user_evaluation_model == "":
+        if model_name == final_model:
+            best_model = best_evaluation_model.best_estimator_.named_steps["model"]
+            train_predictions = best_evaluation_model.predict(x_train)
+            test_predictions = best_evaluation_model.predict(x_test)
+            print("The best performing model is: " + str(best_model))
+            if is_classifier(best_model):
+                print("Creating classification evaluation plots")
+                create_classification_evaluation_plots(
+                    best_evaluation_model,
+                    best_model,
+                    target_var,
+                    id_col,
+                    original_df,
+                    x_train,
+                    y_train,
+                    x_test,
+                    y_test,
+                    train_predictions,
+                    test_predictions,
+                    output_label,
+                    output_path,
+                    col_label_map,
+                    shap_id_keys,
+                    index_mapping,
+                )
+            else:
+                print("Creating regression plots")
+                create_regression_evaluation_plots(
+                    best_evaluation_model,
+                    best_model,
+                    target_var,
+                    id_col,
+                    original_df,
+                    x_train,
+                    y_train,
+                    x_test,
+                    y_test,
+                    train_predictions,
+                    test_predictions,
+                    output_label,
+                    output_path,
+                    col_label_map,
+                    shap_id_keys,
+                    index_mapping,
+                ) 
     return
 
 
