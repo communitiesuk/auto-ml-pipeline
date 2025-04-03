@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import plotly.graph_objects as go
 from sklearn import tree
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_recall_curve
 from sklearn.inspection import (
     PartialDependenceDisplay,
     permutation_importance,
@@ -426,6 +426,31 @@ def create_permutation_feature_importance_plot(
     return
 
 
+def create_precision_recall_curve():
+    return
+
+
+def plot_precision_recall_vs_threshold(full_pipeline, x_test, y_test):
+    """
+    Modified from:
+    Hands-On Machine learning with Scikit-Learn
+    and TensorFlow; p.89
+    """
+    y_scores = full_pipeline.predict_proba(x_test)[:, 1]
+    precisions, recalls, thresholds = precision_recall_curve(y_test, y_scores)
+
+
+    plt.figure(figsize=(8, 8))
+    plt.title("Precision and Recall Scores as a function of the decision threshold")
+    plt.plot(thresholds, precisions[:-1], "b--", label="Precision")
+    plt.plot(thresholds, recalls[:-1], "g-", label="Recall")
+    plt.ylabel("Score")
+    plt.xlabel("Decision Threshold")
+    plt.legend(loc='best')
+    plt.savefig("pr_threshold_test.png")
+    return
+
+
 def add_original_indices_test_train(
     data: np.ndarray,
     data_type: str,
@@ -666,6 +691,11 @@ def create_classification_evaluation_plots(
         output_path,
         col_labels,
         feature_diff_dict,
+    )
+    plot_precision_recall_vs_threshold(
+        full_pipeline, 
+        x_test, 
+        y_test
     )
     create_shap_plots(
         id_col,
