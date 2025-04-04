@@ -231,7 +231,8 @@ def create_feature_importance_plot(
     return
 
 
-def make_confusion_matrix(cf,
+def create_confusion_matrix(y_test,
+                          test_predictions,
                           group_names=["True Neg","False Pos","False Neg","True Pos"],
                           categories='auto',
                           count=True,
@@ -248,7 +249,9 @@ def make_confusion_matrix(cf,
 
     Arguments
     ---------
-    cf:            confusion matrix to be passed in
+    y_test:        target test values
+
+    test_predictions: predicted target test values
 
     group_names:   List of strings that represent the labels row by row to be shown in each square.
 
@@ -275,7 +278,8 @@ def make_confusion_matrix(cf,
     title:         Title for the heatmap. Default is None.
 
     '''
-
+    # generate confusion matrix values
+    cf = confusion_matrix(y_test, test_predictions)
 
     # CODE TO GENERATE TEXT INSIDE EACH SQUARE
     blanks = ['' for i in range(cf.size)]
@@ -341,17 +345,6 @@ def make_confusion_matrix(cf,
     if title:
         plt.title(title)
     plt.savefig("confusion_test.png")
-    return
-
-def create_confusion_matrix(
-        y_test,
-        test_predictions,
-        original_df,
-        output_label,
-        output_path,
-    ):
-    cf_matrix = confusion_matrix(y_test, test_predictions)
-    make_confusion_matrix(cf_matrix)
     return
 
 
@@ -431,29 +424,39 @@ def create_precision_recall_curve(full_pipeline, x_test, y_test):
     precisions, recalls, thresholds = precision_recall_curve(y_test, y_scores)
     pr_auc = average_precision_score(y_test, y_scores)
     # Plot the Precision-Recall curve
-    plt.figure(figsize=(8, 8))
-    plt.plot(recalls, precisions, color='darkorange', lw=2, label='PR curve (AUC = %0.2f)' % pr_auc)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Precision-Recall Curve')
-    plt.legend(loc="lower right")
-    plt.savefig("pr_curve_test.png")
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.plot(recalls, precisions, color='darkorange', lw=2, label='PR curve (AUC = %0.2f)' % pr_auc)
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.0])
+    ax.set_xlabel('Recall')
+    ax.set_ylabel('Precision')
+    ax.set_title('Precision-Recall Curve')
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.xaxis.set_tick_params(bottom=True, top=False)
+    ax.yaxis.set_tick_params(left=True, right=False)
+    fig.legend(bbox_to_anchor=(0.9, 0.87))
+    fig.savefig("pr_curve_test.png")
     return
 
 
 def create_precision_recall_vs_threshold(full_pipeline, x_test, y_test):
     y_scores = full_pipeline.predict_proba(x_test)[:, 1]
     precisions, recalls, thresholds = precision_recall_curve(y_test, y_scores)
-    plt.figure(figsize=(8, 8))
-    plt.title("Precision and Recall Scores as a function of the decision threshold")
-    plt.plot(thresholds, precisions[:-1], "darkorange", label="Precision")
-    plt.plot(thresholds, recalls[:-1], "#4575b4", label="Recall")
-    plt.ylabel("Score")
-    plt.xlabel("Decision Threshold")
-    plt.legend(loc='best')
-    plt.savefig("pr_threshold_test.png")
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.plot(thresholds, precisions[:-1], "darkorange", label="Precision")
+    ax.plot(thresholds, recalls[:-1], "#4575b4", label="Recall")
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.0])
+    ax.set_ylabel("Score")
+    ax.set_xlabel("Decision Threshold")
+    ax.set_title("Precision and Recall Scores as a function of the decision threshold")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.xaxis.set_tick_params(bottom=True, top=False)
+    ax.yaxis.set_tick_params(left=True, right=False)
+    fig.legend(bbox_to_anchor=(0.9, 0.87))
+    fig.savefig("pr_threshold_test.png")
     return
 
 
@@ -680,14 +683,11 @@ def create_classification_evaluation_plots(
         feature_sign_dict,
         col_labels,
         output_label,
-        output_path,
+        output_path
     )
     create_confusion_matrix(
         y_test,
-        test_predictions,
-        original_df,
-        output_label,
-        output_path,
+        test_predictions
     )
     create_partial_dependence_plots(
         full_pipeline,
@@ -696,7 +696,7 @@ def create_classification_evaluation_plots(
         output_label,
         output_path,
         col_labels,
-        feature_diff_dict,
+        feature_diff_dict
     )
     create_precision_recall_curve(
         full_pipeline, 
