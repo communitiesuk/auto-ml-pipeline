@@ -193,44 +193,6 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, d
     return feature_sign_dict, feature_diff_dict
 
 
-def create_feature_importance_plot(
-    model,
-    x_train,
-    target_var,
-    sign_dict,
-    col_labels,
-    output_label: str = "",
-    output_path: str = "",
-) -> None:
-    global_importances = pd.DataFrame(
-        data={"Importance": model.feature_importances_, "Feature": x_train.columns}
-    )
-    global_importances.sort_values(by="Importance", ascending=True, inplace=True)
-    global_importances["sign"] = (
-        global_importances["Feature"].map(sign_dict).astype(str)
-    )
-    global_importances["Feature"] = global_importances["Feature"].replace(col_labels)
-    fig = px.bar(
-        global_importances,
-        y="Importance",
-        x="Feature",
-        color="sign",
-        title="Global Feature Importance",
-        color_discrete_map={"1": "#4575b4", "-1": "#d73027"},
-        labels=col_labels,
-    )
-    fig.update_layout(
-        xaxis_categoryorder="total ascending",
-        showlegend=False,
-        height=750,
-        width=1000,
-    )
-    fig.write_html(
-        f"{output_path}/{output_label}_tree_feature_importance_{target_var}.html"
-    )
-    return
-
-
 def create_confusion_matrix(y_test,
                           test_predictions,
                           group_names=["True Neg","False Pos","False Neg","True Pos"],
@@ -669,9 +631,6 @@ def create_classification_evaluation_plots(
     Returns:
         None
     """
-    print("in eval code")
-    print(x_test)
-    print(y_test)
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
         full_pipeline, x_train
     )
