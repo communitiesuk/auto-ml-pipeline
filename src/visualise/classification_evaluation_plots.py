@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import plotly.graph_objects as go
 from sklearn import tree
-from sklearn.metrics import confusion_matrix, precision_recall_curve
+from sklearn.metrics import confusion_matrix, precision_recall_curve, average_precision_score
 from sklearn.inspection import (
     PartialDependenceDisplay,
     permutation_importance,
@@ -426,24 +426,30 @@ def create_permutation_feature_importance_plot(
     return
 
 
-def create_precision_recall_curve():
+def create_precision_recall_curve(full_pipeline, x_test, y_test):
+    y_scores = full_pipeline.predict_proba(x_test)[:, 1]
+    precisions, recalls, thresholds = precision_recall_curve(y_test, y_scores)
+    pr_auc = average_precision_score(y_test, y_scores)
+    # Plot the Precision-Recall curve
+    plt.figure(figsize=(8, 8))
+    plt.plot(recalls, precisions, color='darkorange', lw=2, label='PR curve (AUC = %0.2f)' % pr_auc)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve')
+    plt.legend(loc="lower right")
+    plt.savefig("pr_curve_test.png")
     return
 
 
-def plot_precision_recall_vs_threshold(full_pipeline, x_test, y_test):
-    """
-    Modified from:
-    Hands-On Machine learning with Scikit-Learn
-    and TensorFlow; p.89
-    """
+def create_precision_recall_vs_threshold(full_pipeline, x_test, y_test):
     y_scores = full_pipeline.predict_proba(x_test)[:, 1]
     precisions, recalls, thresholds = precision_recall_curve(y_test, y_scores)
-
-
     plt.figure(figsize=(8, 8))
     plt.title("Precision and Recall Scores as a function of the decision threshold")
-    plt.plot(thresholds, precisions[:-1], "b--", label="Precision")
-    plt.plot(thresholds, recalls[:-1], "g-", label="Recall")
+    plt.plot(thresholds, precisions[:-1], "darkorange", label="Precision")
+    plt.plot(thresholds, recalls[:-1], "#4575b4", label="Recall")
     plt.ylabel("Score")
     plt.xlabel("Decision Threshold")
     plt.legend(loc='best')
@@ -692,7 +698,12 @@ def create_classification_evaluation_plots(
         col_labels,
         feature_diff_dict,
     )
-    plot_precision_recall_vs_threshold(
+    create_precision_recall_curve(
+        full_pipeline, 
+        x_test, 
+        y_test
+        )
+    create_precision_recall_vs_threshold(
         full_pipeline, 
         x_test, 
         y_test
