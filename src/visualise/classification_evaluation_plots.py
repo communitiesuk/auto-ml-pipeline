@@ -195,6 +195,9 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, d
 
 def create_confusion_matrix(y_test,
                           test_predictions,
+                          target_var: str,
+                          output_path: str,
+                          output_label: str = "",
                           group_names=["True Neg","False Pos","False Neg","True Pos"],
                           categories='auto',
                           count=True,
@@ -306,7 +309,7 @@ def create_confusion_matrix(y_test,
     
     if title:
         plt.title(title)
-    plt.savefig("confusion_test.png")
+    plt.savefig(f"{output_path}/{output_label}_confusion_matrix_{target_var}.png")
     return
 
 
@@ -381,7 +384,7 @@ def create_permutation_feature_importance_plot(
     return
 
 
-def create_precision_recall_curve(full_pipeline, x_test, y_test):
+def create_precision_recall_curve(full_pipeline, x_test, y_test, target_var: str, output_path: str, output_label: str = ""):
     y_scores = full_pipeline.predict_proba(x_test)[:, 1]
     precisions, recalls, thresholds = precision_recall_curve(y_test, y_scores)
     pr_auc = average_precision_score(y_test, y_scores)
@@ -398,11 +401,11 @@ def create_precision_recall_curve(full_pipeline, x_test, y_test):
     ax.xaxis.set_tick_params(bottom=True, top=False)
     ax.yaxis.set_tick_params(left=True, right=False)
     fig.legend(bbox_to_anchor=(0.9, 0.87))
-    fig.savefig("pr_curve_test.png")
+    fig.savefig(f"{output_path}/{output_label}_pr_curve_{target_var}.png")
     return
 
 
-def create_precision_recall_vs_threshold(full_pipeline, x_test, y_test):
+def create_precision_recall_vs_threshold(full_pipeline, x_test, y_test, target_var: str, output_path: str, output_label: str = ""):
     y_scores = full_pipeline.predict_proba(x_test)[:, 1]
     precisions, recalls, thresholds = precision_recall_curve(y_test, y_scores)
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -418,7 +421,7 @@ def create_precision_recall_vs_threshold(full_pipeline, x_test, y_test):
     ax.xaxis.set_tick_params(bottom=True, top=False)
     ax.yaxis.set_tick_params(left=True, right=False)
     fig.legend(bbox_to_anchor=(0.9, 0.87))
-    fig.savefig("pr_threshold_test.png")
+    fig.savefig(f"{output_path}/{output_label}_pr_threshold_{target_var}.png")
     return
 
 
@@ -463,8 +466,6 @@ def add_original_indices_test_train(
     )[["Actual", id_col]]
 
     return merged
-
-
 
 
 def create_tree_plot(
@@ -646,7 +647,10 @@ def create_classification_evaluation_plots(
     # )
     create_confusion_matrix(
         y_test,
-        test_predictions
+        test_predictions,
+        target_var,
+        output_path,
+        output_label,
     )
     # create_partial_dependence_plots(
     #     full_pipeline,
@@ -660,12 +664,18 @@ def create_classification_evaluation_plots(
     create_precision_recall_curve(
         full_pipeline, 
         x_test, 
-        y_test
+        y_test,
+        target_var,
+        output_path,
+        output_label,
         )
     create_precision_recall_vs_threshold(
         full_pipeline, 
         x_test, 
-        y_test
+        y_test,
+        target_var,
+        output_path,
+        output_label,
     )
     create_shap_plots(
         id_col,

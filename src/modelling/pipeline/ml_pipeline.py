@@ -20,8 +20,9 @@ from sklearn.base import BaseEstimator, TransformerMixin, is_classifier, is_regr
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score, f1_score, accuracy_score, precision_score, recall_score
-from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.model_selection import RandomizedSearchCV, TunedThresholdClassifierCV, train_test_split
 from sklearn import set_config
+
 
 from src.visualise.regression_evaluation_plots import create_regression_evaluation_plots
 from src.visualise.classification_evaluation_plots import create_classification_evaluation_plots
@@ -107,6 +108,7 @@ def evaluate_model(
     y_train: np.ndarray,
     x_test: pd.DataFrame,
     y_test: np.ndarray,
+    scoring_metrics: list, 
 ) -> tuple:
     """
     Evaluate the performance of the given model on training and test data.
@@ -118,6 +120,7 @@ def evaluate_model(
     - y_train (np.ndarray): Training target data.
     - x_test (pd.DataFrame): Test input data.
     - y_test (np.ndarray): Test target data.
+    - scoring_metrics (list): List of scoring metrics to opitimise the hyperparam and/or classification threshold search
 
     Returns: tuple: Tuple containing train_rmse, train_rmse_sd, test_rmse, train_r2, train_r2_sd, test_r2, train_predictions, and test_predictions.
     """
@@ -132,18 +135,19 @@ def evaluate_model(
     eval_metrics = {}
     # if classifier, output classification eval metrics
     if is_classifier(best_model):
-        eval_metrics["train_f1"] = round(cv_results["mean_test_f1_macro"][best_model_idx], 2)
-        eval_metrics["train_accuracy"] = round(cv_results["mean_test_accuracy"][best_model_idx], 2)
-        eval_metrics["test_f1"] = round(f1_score(y_test, test_predictions), 2)
-        eval_metrics["test_accuracy"] = round(accuracy_score(y_test, test_predictions), 2)
-        eval_metrics["test_precision"] = round(precision_score(y_test, test_predictions), 2)
-        eval_metrics["test_recall"] = round(recall_score(y_test, test_predictions), 2)
+        eval_metrics["best_threshold"] = round(best_model.named_steps['model'].best_threshold_, 2)
+        for scorer in scoring_metrics:
+            eval_metrics["train_" + scorer] = round(cv_results["mean_test_" + scorer][best_model_idx], 2)
+        eval_metrics["f1"] = round(f1_score(y_test, test_predictions), 2)
+        eval_metrics["accuracy"] = round(accuracy_score(y_test, test_predictions), 2)
+        eval_metrics["precision"] = round(precision_score(y_test, test_predictions), 2)
+        eval_metrics["recall"] = round(recall_score(y_test, test_predictions), 2)
         # add ml flow bit
         # log test performance to MLflow
-        mlflow.log_metric("test_accuracy", eval_metrics["test_accuracy"])
-        mlflow.log_metric("test_f1", eval_metrics["test_f1"])
-        mlflow.log_metric("test_precision", eval_metrics["test_precision"])
-        mlflow.log_metric("test_recall", eval_metrics["test_recall"])
+        mlflow.log_metric("test_accuracy", eval_metrics["accuracy"])
+        mlflow.log_metric("test_f1", eval_metrics["f1"])
+        mlflow.log_metric("test_precision", eval_metrics["precision"])
+        mlflow.log_metric("test_recall", eval_metrics["recall"])
     else:
         # else output regression metrics
         # training metrics from CV test sets
@@ -154,8 +158,8 @@ def evaluate_model(
         eval_metrics["test_rmse"] = round(np.sqrt(mean_squared_error(y_test, test_predictions)), 2)
         eval_metrics["test_r2"] = round(r2_score(y_test, test_predictions), 2)
         # log test performance to MLflow
-        mlflow.log_metric("test_r2", eval_metrics["test_r2"])
-        mlflow.log_metric("test_rmse", eval_metrics["test_rmse"])
+        mlflow.log_metric("test_r2", eval_metrics["r2"])
+        mlflow.log_metric("test_rmse", eval_metrics["rmse"])
     return (
         eval_metrics,
         train_predictions,
@@ -376,6 +380,7 @@ def model_pipeline(
     feature_df: pd.DataFrame,
     id_col: str,
     original_df: pd.DataFrame,
+    scoring_metrics: list = [],
     output_label: str = "",
     output_path: str = "",
     col_label_map: dict = {},
@@ -397,6 +402,7 @@ def model_pipeline(
     - y_train (np.ndarray): Training target data.
     - x_test (pd.DataFrame): Test input data.
     - y_test (np.ndarray): Test target data.
+    - scoring_metrics (list, optional): List of scoring metrics to opitimise the hyperparam and/or classification threshold search
     - output_label (str): A label to add to the output files saved.
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots
@@ -436,14 +442,24 @@ def model_pipeline(
     for model in model_param_dict.keys():
         # check if classifer, if not regression
         if is_classifier(model):
-            scoring_metrics = ["f1_macro", "accuracy"]
-            best_scorer = "test_f1"
+            if not scoring_metrics:
+                scoring_metrics = ["f1", "accuracy"]
+            best_scorer = scoring_metrics[0]
             best_score = 0
+            # preserve original model object for cv param dict and wrap model with classier threshold tuner
+            pipeline_model = model
+            model = TunedThresholdClassifierCV(model, scoring=best_scorer)
+
 
         elif is_regressor(model):
-            scoring_metrics = ["neg_root_mean_squared_error", "r2"]
-            best_scorer = "test_r2"
+            if not scoring_metrics:
+                scoring_metrics = ["r2", "neg_root_mean_squared_error"]
+            best_scorer = scoring_metrics[0]
+            # switch default rmse label to shorthand for logging
+            if best_scorer == "neg_root_mean_squared_error":
+                best_scorer = "rmse"
             best_score = -100
+            pipeline_model= model
 
         else:
             raise Exception("Model type not recognised")
@@ -472,7 +488,7 @@ def model_pipeline(
             # defining optimisation criteria here, this could be user defined in future.
             full_pipeline = RandomizedSearchCV(
                 processing_pipeline,
-                model_param_dict[model],
+                model_param_dict[pipeline_model],
                 cv=5,
                 n_iter=150,
                 scoring=scoring_metrics,
@@ -512,7 +528,7 @@ def model_pipeline(
                 train_predictions,
                 test_predictions,
             ) = evaluate_model(
-                full_pipeline, best_model, x_train, y_train, x_test, y_test
+                full_pipeline, best_model, x_train, y_train, x_test, y_test, scoring_metrics
             )
 
         # keep track of best performing model in terms of r2 or f1 score for eval plots
