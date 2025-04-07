@@ -631,32 +631,32 @@ def create_classification_evaluation_plots(
     Returns:
         None
     """
-    feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
-        full_pipeline, x_train
-    )
-    create_permutation_feature_importance_plot(
-        full_pipeline,
-        x_test,
-        y_test,
-        target_var,
-        feature_sign_dict,
-        col_labels,
-        output_label,
-        output_path
-    )
+    # feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
+    #     full_pipeline, x_train
+    # )
+    # create_permutation_feature_importance_plot(
+    #     full_pipeline,
+    #     x_test,
+    #     y_test,
+    #     target_var,
+    #     feature_sign_dict,
+    #     col_labels,
+    #     output_label,
+    #     output_path
+    # )
     create_confusion_matrix(
         y_test,
         test_predictions
     )
-    create_partial_dependence_plots(
-        full_pipeline,
-        x_train,
-        target_var,
-        output_label,
-        output_path,
-        col_labels,
-        feature_diff_dict
-    )
+    # create_partial_dependence_plots(
+    #     full_pipeline,
+    #     x_train,
+    #     target_var,
+    #     output_label,
+    #     output_path,
+    #     col_labels,
+    #     feature_diff_dict
+    # )
     create_precision_recall_curve(
         full_pipeline, 
         x_test, 

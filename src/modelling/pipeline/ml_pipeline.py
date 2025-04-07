@@ -487,6 +487,8 @@ def model_pipeline(
             # best model from cv search
             best_params = full_pipeline.best_params_
             best_model = full_pipeline.best_estimator_
+            best_threshold = best_model.named_steps['model'].best_threshold_
+            print(f"best threshold: {best_threshold}")
 
             # save best models
             pickle.dump(
