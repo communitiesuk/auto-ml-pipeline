@@ -155,8 +155,8 @@ def evaluate_model(
         eval_metrics["train_rmse_sd"] = round(cv_results["std_test_neg_root_mean_squared_error"][best_model_idx], 3)
         eval_metrics["train_r2"] = round(cv_results["mean_test_r2"][best_model_idx], 2)
         eval_metrics["train_r2_sd"] = round(cv_results["std_test_r2"][best_model_idx], 2)
-        eval_metrics["test_rmse"] = round(np.sqrt(mean_squared_error(y_test, test_predictions)), 2)
-        eval_metrics["test_r2"] = round(r2_score(y_test, test_predictions), 2)
+        eval_metrics["rmse"] = round(np.sqrt(mean_squared_error(y_test, test_predictions)), 2)
+        eval_metrics["r2"] = round(r2_score(y_test, test_predictions), 2)
         # log test performance to MLflow
         mlflow.log_metric("test_r2", eval_metrics["r2"])
         mlflow.log_metric("test_rmse", eval_metrics["rmse"])
@@ -255,7 +255,7 @@ def output_evaluation_metrics_and_plots(
         model_evaluation_dict.update(eval_metrics)
         model_evaluation_dict.update({
             "target_mean": target_df.mean(),
-            "test_RMSE_perc_mean": (eval_metrics["test_rmse"] / target_df.mean()).round(2),
+            "test_RMSE_perc_mean": (eval_metrics["rmse"] / target_df.mean()).round(2),
         })
     model_evaluation_df = pd.DataFrame([model_evaluation_dict])
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
@@ -503,8 +503,6 @@ def model_pipeline(
             # best model from cv search
             best_params = full_pipeline.best_params_
             best_model = full_pipeline.best_estimator_
-            best_threshold = best_model.named_steps['model'].best_threshold_
-            print(f"best threshold: {best_threshold}")
 
             # save best models
             pickle.dump(
