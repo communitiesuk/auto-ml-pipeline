@@ -163,7 +163,6 @@ def create_confusion_matrix(y_test,
     
     if title:
         plt.title(title)
-    print(output_path)
     plt.savefig(f"{output_path}/{output_label}_confusion_matrix_{target_var}.png")
     return
 
