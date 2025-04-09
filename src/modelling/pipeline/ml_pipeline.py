@@ -395,7 +395,7 @@ def model_pipeline(
     - y_train (np.ndarray): Training target data.
     - x_test (pd.DataFrame): Test input data.
     - y_test (np.ndarray): Test target data.
-    - scoring_metrics (list, optional): List of scoring metrics to opitimise the hyperparam and/or classification threshold search
+    - scoring_metrics (list, optional): User defined list of scoring metrics to opitimise the hyperparam and/or classification threshold search
     - output_label (str): A label to add to the output files saved.
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots
@@ -479,7 +479,6 @@ def model_pipeline(
         log_results_to_mlflow(model_name, output_label)
 
         with mlflow.start_run(run_name=output_label + "_" + model_name) as run:
-            # defining optimisation criteria here, this could be user defined in future.
             full_pipeline = RandomizedSearchCV(
                 processing_pipeline,
                 model_param_dict[pipeline_model],
