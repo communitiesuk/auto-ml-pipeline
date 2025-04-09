@@ -133,6 +133,8 @@ def evaluate_model(
     test_predictions = best_model.predict(x_test)
     # dictionary to store eval metrics
     eval_metrics = {}
+    # log primary optimisation metric
+    eval_metrics["optimisation_metric"] = scoring_metrics[0]
     # if classifier, output classification eval metrics
     if is_classifier(best_model):
         eval_metrics["best_threshold"] = round(best_model.named_steps['model'].best_threshold_, 2)
