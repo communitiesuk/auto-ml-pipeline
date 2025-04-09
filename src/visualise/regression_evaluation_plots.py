@@ -700,6 +700,7 @@ def create_regression_evaluation_plots(
     Returns:
         None
     """
+    print(output_path)
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
         full_pipeline, x_train
     )
@@ -710,8 +711,8 @@ def create_regression_evaluation_plots(
         target_var,
         feature_sign_dict,
         col_labels,
-        output_label,
         output_path,
+        output_label,
     )
     create_actual_vs_predicted_scatter(
         y_train,
@@ -721,8 +722,8 @@ def create_regression_evaluation_plots(
         id_col,
         original_df,
         target_var,
-        output_label,
         output_path,
+        output_label,
         index_mapping,
     )
     create_residuals_plot(
@@ -733,16 +734,16 @@ def create_regression_evaluation_plots(
         id_col,
         original_df,
         target_var,
-        output_label,
         output_path,
+        output_label,
         index_mapping,
     )
     create_partial_dependence_plots(
         full_pipeline,
         x_train,
         target_var,
-        output_label,
         output_path,
+        output_label,
         col_labels,
         feature_diff_dict,
     )
@@ -754,8 +755,8 @@ def create_regression_evaluation_plots(
         full_pipeline,
         target_var,
         shap_id_keys,
-        output_label,
         output_path,
+        output_label,
         index_mapping,
     )
     return

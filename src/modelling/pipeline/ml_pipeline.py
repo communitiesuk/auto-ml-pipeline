@@ -244,8 +244,6 @@ def output_evaluation_metrics_and_plots(
 
     if is_classifier(full_pipeline.best_estimator_.named_steps["model"]):
         model_evaluation_dict.update(eval_metrics)
-        print("Creating classification evaluation plots")
-
     else:
         model_evaluation_dict.update(eval_metrics)
         model_evaluation_dict.update({
@@ -255,7 +253,7 @@ def output_evaluation_metrics_and_plots(
     model_evaluation_df = pd.DataFrame([model_evaluation_dict])
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
     output.drop_duplicates().to_csv(filename, index=False)
-    
+
     if model_name == user_evaluation_model:
         if is_classifier(feature_importance_model):
             print("Creating classification evaluation plots")
@@ -271,8 +269,8 @@ def output_evaluation_metrics_and_plots(
                 y_test,
                 train_predictions,
                 test_predictions,
-                output_label,
                 output_path,
+                output_label,
                 col_label_map,
                 shap_id_keys,
                 index_mapping,
@@ -291,8 +289,8 @@ def output_evaluation_metrics_and_plots(
                 y_test,
                 train_predictions,
                 test_predictions,
-                output_label,
                 output_path,
+                output_label,
                 col_label_map,
                 shap_id_keys,
                 index_mapping,
@@ -318,8 +316,8 @@ def output_evaluation_metrics_and_plots(
                     y_test,
                     train_predictions,
                     test_predictions,
-                    output_label,
                     output_path,
+                    output_label,
                     col_label_map,
                     shap_id_keys,
                     index_mapping,
@@ -338,8 +336,8 @@ def output_evaluation_metrics_and_plots(
                     y_test,
                     train_predictions,
                     test_predictions,
-                    output_label,
                     output_path,
+                    output_label,
                     col_label_map,
                     shap_id_keys,
                     index_mapping,
@@ -531,7 +529,6 @@ def model_pipeline(
             best_score = test_score
             best_evaluation_model = full_pipeline
             # now just input into eval metrics function
-
         # output model results
         output_evaluation_metrics_and_plots(
             user_evaluation_model,
