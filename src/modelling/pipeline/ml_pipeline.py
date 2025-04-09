@@ -213,12 +213,7 @@ def output_evaluation_metrics_and_plots(
     - y_test (np.ndarray): Test target data.
     - train_predictions (np.ndarray): Predictions on the training set.
     - test_predictions (np.ndarray): Predictions on the test set.
-    - train_rmse (float): Training RMSE.
-    - train_rmse_sd (float): Standard deviation of training RMSE.
-    - test_rmse (float): Test RMSE.
-    - train_r2 (float): Training R^2.
-    - train_r2_sd (float): Training R^2 standard deviation from CV.
-    - test_r2 (float): Test R^2.
+    - eval_metrics (dict): Evaluation metrics that have been logged for the particular machine learning model
     - output_label (str): A label to add to the output files saved.
     - output_path (str): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots.
@@ -228,7 +223,7 @@ def output_evaluation_metrics_and_plots(
     Returns: None
     """
     # create an empty csv for the results
-    filename = f"{output_path}/{output_label}_regression_model_summary.csv"
+    filename = f"{output_path}/{output_label}_model_summary.csv"
     if os.path.isfile(filename):
         all_models_evaluation_df = pd.read_csv(filename)
     else:
@@ -389,10 +384,10 @@ def model_pipeline(
     custom_pre_processing_steps: list = [],
 ) -> None:
     """
-    Perform randomised search cross-validation for multiple regression models.
+    Perform randomised search cross-validation for multiple machine learning models.
 
     Parameters:
-    - model_param_dict (dict): Dictionary containing regression models and their hyperparameter grids.
+    - model_param_dict (dict): Dictionary containing machine learning models and their hyperparameter grids.
     - target_var (str): Name of the target variable.
     - target_df (pd.DataFrame): Original target df.
     - feature_df (pd.DataFrame): Original feature df.
@@ -440,6 +435,9 @@ def model_pipeline(
     final_model = str(list(model_param_dict.keys())[-1]).split("(")[0]
 
     for model in model_param_dict.keys():
+        model_name = str(model).split("(")[0]
+        print(model_name)
+
         # check if classifer, if not regression
         if is_classifier(model):
             if not scoring_metrics:
@@ -449,7 +447,6 @@ def model_pipeline(
             # preserve original model object for cv param dict and wrap model with classier threshold tuner
             pipeline_model = model
             model = TunedThresholdClassifierCV(model, scoring=best_scorer)
-
 
         elif is_regressor(model):
             if not scoring_metrics:
@@ -464,8 +461,7 @@ def model_pipeline(
         else:
             raise Exception("Model type not recognised")
 
-        model_name = str(model).split("(")[0]
-        print(model_name)
+        
 
         # apply custom pre_processing steps, else use default processing pipeline
         if custom_pre_processing_steps:
