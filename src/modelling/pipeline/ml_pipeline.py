@@ -391,13 +391,9 @@ def model_pipeline(
     - feature_df (pd.DataFrame): Original feature df.
     - id_col (str): Name of the unique id variable for each row in the dataset.
     - original_df (str): Original full feature and target df with id col.
-    - x_train (pd.DataFrame): Training input data.
-    - y_train (np.ndarray): Training target data.
-    - x_test (pd.DataFrame): Test input data.
-    - y_test (np.ndarray): Test target data.
     - scoring_metrics (list, optional): User defined list of scoring metrics to opitimise the hyperparam and/or classification threshold search
-    - output_label (str): A label to add to the output files saved.
-    - output_path (str): A path to the directory where the output files will be saved.
+    - output_label (str, optional): A label to add to the output files saved.
+    - output_path (str, optional): A path to the directory where the output files will be saved.
     - col_label_map (dict): A map of shortened feature names for the evaluation plots
     - user_evaluation_model (str, optional): User defined model to use when creating evaluation plots.
       If not defined, evaluation plots will be created for the best performing model.

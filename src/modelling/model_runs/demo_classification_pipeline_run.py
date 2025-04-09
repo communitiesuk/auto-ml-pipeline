@@ -67,6 +67,7 @@ for target_var in target_var_list:
         feature_df=features,
         id_col="",
         original_df=iris_data,
+        scoring_metrics=["f1"],
         output_path="outputs",
         output_label="classification_demo",
         col_label_map=col_labels,
