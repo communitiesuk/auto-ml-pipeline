@@ -368,6 +368,20 @@ def log_results_to_mlflow(model_name: str, output_label: str = "") -> None:
     return
 
 
+def verify_output_path(output_path: str) -> None:
+    """
+    Check if output path exists, if not, create new directory
+    Parameters:
+        output_path (str): A path to the directory where the output files will be saved.
+    """
+    if os.path.isdir(output_path):
+        return
+    else:
+        print("output path does not exist, creating new directory")
+        os.makedirs(output_path) 
+        return
+
+
 def model_pipeline(
     model_param_dict: dict,
     target_var: str,
@@ -412,8 +426,9 @@ def model_pipeline(
 
     # print number of cores available for parallel processing
     print(f"Number of cores available for parallel processing: {effective_n_jobs(-1)}")
-
-     # Create a mapping dictionary for Shap plots: original_df index -> (x_train or x_test, index)
+    # check output path
+    verify_output_path(output_path)
+    # Create a mapping dictionary for Shap plots: original_df index -> (x_train or x_test, index)
     # Get the indices for the train and test sets
     train_indices = x_train.index
     test_indices = x_test.index
