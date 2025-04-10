@@ -466,7 +466,9 @@ def model_pipeline(
             # switch default rmse label to shorthand for logging
             if best_scorer == "neg_root_mean_squared_error":
                 best_scorer = "rmse"
-            best_score = -100
+                best_score =  float('inf')
+            elif best_scorer =="r2":
+                best_score = float('-inf')
             pipeline_model= model
 
         else:
