@@ -150,7 +150,7 @@ def evaluate_model(
         mlflow.log_metric("test_f1", eval_metrics["f1"])
         mlflow.log_metric("test_precision", eval_metrics["precision"])
         mlflow.log_metric("test_recall", eval_metrics["recall"])
-    else:
+    elif is_regressor(best_model):
         # else output regression metrics
         # training metrics from CV test sets
         eval_metrics["train_rmse"] = round(-cv_results["mean_test_neg_root_mean_squared_error"][best_model_idx], 2)
@@ -244,9 +244,9 @@ def output_evaluation_metrics_and_plots(
     # create evaluation plots
     feature_importance_model = full_pipeline.best_estimator_.named_steps["model"]
 
-    if is_classifier(full_pipeline.best_estimator_.named_steps["model"]):
+    if is_classifier(feature_importance_model):
         model_evaluation_dict.update(eval_metrics)
-    else:
+    elif is_regressor(feature_importance_model):
         model_evaluation_dict.update(eval_metrics)
         model_evaluation_dict.update({
             "target_mean": target_df.mean(),
@@ -277,7 +277,7 @@ def output_evaluation_metrics_and_plots(
                 shap_id_keys,
                 index_mapping,
             )
-        else:
+        elif is_regressor(feature_importance_model):
             print("Creating regression plots")
             create_regression_evaluation_plots(
                 full_pipeline,
@@ -324,7 +324,7 @@ def output_evaluation_metrics_and_plots(
                     shap_id_keys,
                     index_mapping,
                 )
-            else:
+            elif is_regressor(best_model):
                 print("Creating regression plots")
                 create_regression_evaluation_plots(
                     best_evaluation_model,
