@@ -8,30 +8,12 @@ import sys
 
 sys.path.append(repo.working_tree_dir)
 
-from typing import Any, Tuple, Dict
-import shap
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
-import plotly.express as px
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import plotly.graph_objects as go
-from sklearn import tree
 from sklearn.metrics import confusion_matrix, precision_recall_curve, average_precision_score
-from sklearn.inspection import (
-    PartialDependenceDisplay,
-    permutation_importance,
-)
-
-from src.visualise.scatter_chart import scatter_chart
-from src.visualise.regression_evaluation_plots import (
-    create_partial_dependence_plots, 
-    create_feature_sign_dict, 
-    create_permutation_feature_importance_plot, 
-    add_original_indices_test_train, 
-    create_shap_plots
-)
 
 # matplotlib font sizes
 SMALL_SIZE = 12
