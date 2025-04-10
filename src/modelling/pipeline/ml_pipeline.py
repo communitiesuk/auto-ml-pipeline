@@ -171,7 +171,7 @@ def evaluate_model(
 
 def output_evaluation_metrics_and_plots(
     user_evaluation_model: str,
-    best_evaluation_model: str,
+    best_evaluation_model: object,
     final_model: str,
     full_pipeline: object,
     model_name: str,
@@ -200,7 +200,7 @@ def output_evaluation_metrics_and_plots(
 
     - user_evaluation_model (str): User defined model to use when creating evaluation plots.
       If not defined, evaluation plots will be created for the best performing model.
-    - best_evaluation_model (str): best performing model so far.
+    - best_evaluation_model (object): full pipeline of best performing model so far.
     - final_model (str): final model in model dictionary.
     - full_pipeline (object): Trained regression model pipeline.
     - model_name (str): Name of the regression model.
@@ -256,59 +256,26 @@ def output_evaluation_metrics_and_plots(
     output = pd.concat([all_models_evaluation_df, model_evaluation_df])
     output.drop_duplicates().to_csv(filename, index=False)
 
-    if model_name == user_evaluation_model:
-        if is_classifier(feature_importance_model):
-            print("Creating classification evaluation plots")
-            create_classification_evaluation_plots(
-                full_pipeline,
-                feature_importance_model,
-                target_var,
-                id_col,
-                original_df,
-                x_train,
-                y_train,
-                x_test,
-                y_test,
-                train_predictions,
-                test_predictions,
-                output_path,
-                output_label,
-                col_label_map,
-                shap_id_keys,
-                index_mapping,
-            )
-        elif is_regressor(feature_importance_model):
-            print("Creating regression plots")
-            create_regression_evaluation_plots(
-                full_pipeline,
-                feature_importance_model,
-                target_var,
-                id_col,
-                original_df,
-                x_train,
-                y_train,
-                x_test,
-                y_test,
-                train_predictions,
-                test_predictions,
-                output_path,
-                output_label,
-                col_label_map,
-                shap_id_keys,
-                index_mapping,
-            )
-    # if no user defined model then create plots for best performing model
-    elif user_evaluation_model == "":
-        if model_name == final_model:
-            best_model = best_evaluation_model.best_estimator_.named_steps["model"]
+    if model_name == user_evaluation_model or model_name == final_model:
+        # initialise model as None for the case where the final model is reached but plots the user defined model have already been triggered
+        model = None
+        if model_name == user_evaluation_model:
+            pipeline = full_pipeline
+            model = feature_importance_model
+        elif model_name == final_model and user_evaluation_model == "":
+            pipeline = best_evaluation_model
+            model = best_evaluation_model.best_estimator_.named_steps["model"]
             train_predictions = best_evaluation_model.predict(x_train)
             test_predictions = best_evaluation_model.predict(x_test)
-            print("The best performing model is: " + str(best_model))
-            if is_classifier(best_model):
+            print("The best performing model is: " + str(model))
+
+        # verify model is defined and create eval plots for either user defined model or best model
+        if model:
+            if is_classifier(model):
                 print("Creating classification evaluation plots")
                 create_classification_evaluation_plots(
-                    best_evaluation_model,
-                    best_model,
+                    pipeline,
+                    model,
                     target_var,
                     id_col,
                     original_df,
@@ -324,11 +291,11 @@ def output_evaluation_metrics_and_plots(
                     shap_id_keys,
                     index_mapping,
                 )
-            elif is_regressor(best_model):
+            elif is_regressor(model):
                 print("Creating regression plots")
                 create_regression_evaluation_plots(
-                    best_evaluation_model,
-                    best_model,
+                    pipeline,
+                    model,
                     target_var,
                     id_col,
                     original_df,
