@@ -30,7 +30,7 @@ from sklearn.datasets import load_iris
 iris = load_iris()
 
 iris_data = pd.DataFrame(np.concatenate((iris.data, np.array([iris.target]).T), axis=1), columns=iris.feature_names + ['target'])
-iris_data = iris_data[iris_data["target"].isin([0, 1.0])]
+iris_data = iris_data[iris_data["target"].isin([1.0, 2.0])]
 
 # target variables
 target_var_list = ["target"]
