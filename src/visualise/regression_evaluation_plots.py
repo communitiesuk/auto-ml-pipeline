@@ -46,7 +46,6 @@ def create_partial_dependence_plots(
     output_label: str = "",
     col_labels: dict = {},
     feature_diff_dict: dict = {},
-    cat_features: list = [],
 ) -> None:
     """
     Generates partial dependence plots (PDPs) for a given machine learning model.
@@ -107,7 +106,6 @@ def create_partial_dependence_plots(
         model,
         x_train,
         features_sorted,
-        categorical_features=cat_features,
         ax=axs,
         n_cols=n_cols,
         line_kw={"color": "#4575b4"},
@@ -154,7 +152,7 @@ def create_partial_dependence_plots(
     return
 
 
-def create_feature_sign_dict(model: Any, x_train: pd.DataFrame, cat_features) -> Tuple[dict, dict]:
+def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, dict]:
     """
     Creates a dictionary indicating the sign (positive or negative) of the relationship between each feature and the target variable.
 
@@ -177,13 +175,7 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame, cat_features) ->
     feature_diff_dict = {}
     select_features_list = x_train.columns
 
-
-
-    print((x_train.max() - x_train.min()).sort_values())
-    print(x_train.dtypes)
-    print(cat_features)
     for i, feature in enumerate(select_features_list):
-        print(feature)
         y_data = (
             PartialDependenceDisplay.from_estimator(
                 model, x_train, [select_features_list[i]], kind="average"
@@ -684,7 +676,6 @@ def create_regression_evaluation_plots(
     col_labels: dict = {},
     shap_id_keys: list = [],
     index_mapping: dict = {},
-    cat_features: list = []
 ) -> None:
     """
     Generates multiple plots for model evaluation including feature importance, actual vs. predicted, residuals, and partial dependence plots.
@@ -710,9 +701,8 @@ def create_regression_evaluation_plots(
     Returns:
         None
     """
-    print(output_path)
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
-        full_pipeline, x_train, cat_features
+        full_pipeline, x_train
     )
     create_permutation_feature_importance_plot(
         full_pipeline,
@@ -756,7 +746,6 @@ def create_regression_evaluation_plots(
         output_label,
         col_labels,
         feature_diff_dict,
-        cat_features
     )
     create_shap_plots(
         id_col,

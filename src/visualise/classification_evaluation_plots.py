@@ -253,7 +253,6 @@ def create_classification_evaluation_plots(
     col_labels: dict = {},
     shap_id_keys: list = [],
     index_mapping: dict = {},
-    cat_features: list = [],
 ) -> None:
     """
     Generates multiple plots for model evaluation including feature importance, actual vs. predicted, residuals, and partial dependence plots.
@@ -279,11 +278,9 @@ def create_classification_evaluation_plots(
     Returns:
         None
     """
-    print(output_path)
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
-        full_pipeline, x_train, cat_features
+        full_pipeline, x_train
     )
-    print(cat_features)
     create_permutation_feature_importance_plot(
         full_pipeline,
         x_test,
