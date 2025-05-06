@@ -58,7 +58,7 @@ for target_var in target_var_list:
     cols_to_drop = list(set([target_var] + drop_variables))
     features = preprocess_features(df=iris_data, cols_to_drop=cols_to_drop)
     target_df = preprocess_target(df=iris_data, target_col=target_var)
-
+    print(features)
     # run model pipeline
     model_pipeline(
         model_param_dict=model_param_dict,

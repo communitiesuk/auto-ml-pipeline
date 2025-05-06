@@ -192,6 +192,7 @@ def output_evaluation_metrics_and_plots(
     col_label_map: dict = {},
     shap_id_keys: list = [],
     index_mapping: dict = {},
+    cat_features: list = []
 ) -> None:
     """
     Output evaluation metrics and create plots for the regression model.
@@ -290,6 +291,7 @@ def output_evaluation_metrics_and_plots(
                     col_label_map,
                     shap_id_keys,
                     index_mapping,
+                    cat_features
                 )
             elif is_regressor(model):
                 print("Creating regression plots")
@@ -310,6 +312,7 @@ def output_evaluation_metrics_and_plots(
                     col_label_map,
                     shap_id_keys,
                     index_mapping,
+                    cat_features
                 ) 
     return
 
@@ -363,6 +366,7 @@ def model_pipeline(
     user_evaluation_model: str = "",
     shap_id_keys: list = [],
     custom_pre_processing_steps: list = [],
+    cat_features: list = [],
 ) -> None:
     """
     Perform randomised search cross-validation for multiple machine learning models.
@@ -534,5 +538,6 @@ def model_pipeline(
             col_label_map,
             shap_id_keys,
             index_mapping,
+            cat_features
         )
     return

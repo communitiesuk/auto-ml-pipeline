@@ -152,7 +152,7 @@ def create_partial_dependence_plots(
     return
 
 
-def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, dict]:
+def create_feature_sign_dict(model: Any, x_train: pd.DataFrame, cat_features) -> Tuple[dict, dict]:
     """
     Creates a dictionary indicating the sign (positive or negative) of the relationship between each feature and the target variable.
 
@@ -174,10 +174,20 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, d
     feature_sign_dict = {}
     feature_diff_dict = {}
     select_features_list = x_train.columns
+    print(model.best_estimator_.named_steps["model"].predict_proba(x_train))
+    print(model.best_estimator_.named_steps["model"].predict_proba(x_train).shape)
+    probs = model.predict_proba(x_train)
+    print(probs.shape)  # should be (n_samples, 2)
+    print(np.unique(probs, axis=0))  # check for constancy
+
+    print((x_train.max() - x_train.min()).sort_values())
+    print(x_train.dtypes)
+    print(cat_features)
     for i, feature in enumerate(select_features_list):
+        print(feature)
         y_data = (
             PartialDependenceDisplay.from_estimator(
-                model, x_train, [select_features_list[i]]
+                model, x_train, [select_features_list[i]], kind="average", categorical_features=cat_features 
             )
             .lines_[0, 0]
             .get_ydata()
@@ -675,6 +685,7 @@ def create_regression_evaluation_plots(
     col_labels: dict = {},
     shap_id_keys: list = [],
     index_mapping: dict = {},
+    cat_features: list = []
 ) -> None:
     """
     Generates multiple plots for model evaluation including feature importance, actual vs. predicted, residuals, and partial dependence plots.
@@ -702,7 +713,7 @@ def create_regression_evaluation_plots(
     """
     print(output_path)
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
-        full_pipeline, x_train
+        full_pipeline, x_train, cat_features
     )
     create_permutation_feature_importance_plot(
         full_pipeline,
