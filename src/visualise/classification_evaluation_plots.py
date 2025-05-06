@@ -16,7 +16,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, precision_recall_curve, average_precision_score
 
-from src.visualise.regression_evaluation_plots import create_feature_sign_dict, create_permutation_feature_importance_plot
+from src.visualise.regression_evaluation_plots import create_feature_sign_dict, create_permutation_feature_importance_plot, create_partial_dependence_plots
 
 # matplotlib font sizes
 SMALL_SIZE = 12
@@ -283,6 +283,7 @@ def create_classification_evaluation_plots(
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
         full_pipeline, x_train, cat_features
     )
+    print(cat_features)
     create_permutation_feature_importance_plot(
         full_pipeline,
         x_test,
@@ -293,7 +294,15 @@ def create_classification_evaluation_plots(
         output_path,
         output_label,
     )
-
+    create_partial_dependence_plots(
+        full_pipeline,
+        x_train,
+        target_var,
+        output_path,
+        output_label,
+        col_labels,
+        feature_diff_dict,
+    )
     create_confusion_matrix(
         y_test,
         test_predictions,

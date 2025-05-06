@@ -46,6 +46,7 @@ def create_partial_dependence_plots(
     output_label: str = "",
     col_labels: dict = {},
     feature_diff_dict: dict = {},
+    cat_features: list = [],
 ) -> None:
     """
     Generates partial dependence plots (PDPs) for a given machine learning model.
@@ -106,6 +107,7 @@ def create_partial_dependence_plots(
         model,
         x_train,
         features_sorted,
+        categorical_features=cat_features,
         ax=axs,
         n_cols=n_cols,
         line_kw={"color": "#4575b4"},
@@ -174,11 +176,8 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame, cat_features) ->
     feature_sign_dict = {}
     feature_diff_dict = {}
     select_features_list = x_train.columns
-    print(model.best_estimator_.named_steps["model"].predict_proba(x_train))
-    print(model.best_estimator_.named_steps["model"].predict_proba(x_train).shape)
-    probs = model.predict_proba(x_train)
-    print(probs.shape)  # should be (n_samples, 2)
-    print(np.unique(probs, axis=0))  # check for constancy
+
+
 
     print((x_train.max() - x_train.min()).sort_values())
     print(x_train.dtypes)
@@ -187,7 +186,7 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame, cat_features) ->
         print(feature)
         y_data = (
             PartialDependenceDisplay.from_estimator(
-                model, x_train, [select_features_list[i]], kind="average", categorical_features=cat_features 
+                model, x_train, [select_features_list[i]], kind="average"
             )
             .lines_[0, 0]
             .get_ydata()
@@ -757,6 +756,7 @@ def create_regression_evaluation_plots(
         output_label,
         col_labels,
         feature_diff_dict,
+        cat_features
     )
     create_shap_plots(
         id_col,

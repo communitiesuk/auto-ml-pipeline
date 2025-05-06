@@ -97,7 +97,6 @@ timeseries_df["dvage"] =  pd.to_numeric(timeseries_df["dvage"], errors="coerce")
 
 timeseries_df = timeseries_df[["wave","pidp", "has_social_care", "dvage", "physically_active", "healthy_eater", "has_disability", "hospital_condition"]]
 
-cat_features = list(timeseries_df.columns[4:])
 # drop nas
 timeseries_df.dropna(inplace=True)
 
@@ -140,6 +139,5 @@ for target_var in target_var_list:
         output_path="outputs",
         col_label_map=col_labels,
         user_evaluation_model=user_model,
-        cat_features=cat_features
     )
 
