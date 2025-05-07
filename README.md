@@ -1,6 +1,6 @@
-# Automatic regression pipeline
+# Automatic machine learning pipeline
 
-We have created a multi-stage modelling pipeline which can be applied to any regression machine learning problem. The following guidance explains how to run the pipeline using your own data.
+We have created a multi-stage modelling pipeline which can be applied to any regression, or binary classification machine learning problem. The following guidance explains how to run the pipeline using your own data.
 
 The pipeline is implemented using the scikit-learn library.
 
@@ -210,7 +210,7 @@ pre_processing_pipeline_steps = [
 ]
 ```
 ### Custom scoring metrics
-The scoring_metrics parameter can be used to specify the criteria for which the model training should by optimised and evaluation against. A list of one or more metrics can be provided and the first metric in the list will be used to optimise the hyperparameter search algorithm. Any other metrics in the list will be evaluated during model training but will not be used for optimisation. 
+The scoring_metrics parameter can be used to specify the criteria for which the model training should by optimised and evaluated against. A list of one or more metrics can be provided and the first metric in the list will be used to optimise the hyperparameter search algorithm. Any other metrics in the list will be evaluated during model training but will not be used for optimisation. 
 
 The default scoring metrics for a regression pipeline run are:
 
