@@ -57,6 +57,17 @@ regression_data = regression_data.drop_duplicates()
 regression_data = regression_data.dropna()
 ```
 
+### Assign target variable class labels: classification only
+
+When using the pipeline with binary classification models, the target column must only contain the values 0 for the negative class, or 1 for the positive class. 
+
+You can map your target variables to this range if necessary as follows:
+
+```
+# Assign target classes: map target values to 0 (negative class) and 1 (positive class)
+iris_data["target"] = iris_data["target"].map({1.0: 0, 2.0: 1})
+```
+
 ### Specify columns to drop
 
 The next step is to remove any columns that you want to remove from your modelling pipeline. These can be identifier columns that will not help the model learning process (e.g local authority codes). Or they could be variables that will not provide helpful conclusions about your research question (e.g. using GVA in 2020 would not provide much insight when predicting the underlying drivers of GVA in 2021).
