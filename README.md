@@ -135,6 +135,7 @@ for target_var in target_var_list:
         feature_df=features,
         id_col="msoa11cd",
         original_df=regression_data,
+        scoring_metrics=["r2", "neg_root_mean_squared_error"],
         output_path="your/output/path",
         output_label="msoa_demo",
         col_label_map=col_labels,
@@ -207,6 +208,20 @@ pre_processing_pipeline_steps = [
     ("knn_imputer", KNNImputer()),
     ("scaler", MinMaxScaler()),
 ]
+```
+### Custom scoring metrics
+The scoring_metrics parameter can be used to specify the criteria for which the model training should by optimised and evaluation against. A list of one or more metrics can be provided and the first metric in the list will be used to optimise the hyperparameter search algorithm. Any other metrics in the list will be evaluated during model training but will not be used for optimisation. 
+
+The default scoring metrics for a regression pipeline run are:
+
+```
+scoring_metrics = ["r2", "neg_root_mean_squared_error"]
+```
+
+The default scoring metrics for a classification pipeline run are: 
+
+```
+scoring_metrics = ["f1", "accuracy"]
 ```
 
 ### Create tidy variable labels
