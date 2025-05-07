@@ -130,7 +130,7 @@ def create_partial_dependence_plots(
         )
         axs[i].add_patch(arr)
         axs[i].annotate(
-            int(round(abs(features_sorted_differences[i]), 0)),
+            f'{float(f"{abs(features_sorted_differences[i]):.2g}"):g}',
             (2, 0.5),
             xycoords=arr,
             ha="left",
