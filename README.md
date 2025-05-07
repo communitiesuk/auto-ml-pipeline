@@ -110,7 +110,7 @@ You can add new models by adding them to the model_param_dict object with the co
 
 ### Run the pipeline
 
-The following code shows an example of running the pipeline.
+The following code shows an example of running the pipeline. The code is taken from a [demonstration file](https://github.com/communitiesuk/auto-ml-pipeline/blob/main/src/modelling/model_runs/demo_regression_pipeline_run.py) which shows how the pipeline can be used for a regression task using open data. There is an equivalent demonstration file [here](https://github.com/communitiesuk/auto-ml-pipeline/blob/main/src/modelling/model_runs/demo_classification_pipeline_run.py) which shows how the pipeline can be used in a in a binary classification task.
 
 First the feature data is preprocessed by dropping the specified drop columns and target variable and performing one-hot dummy encoding. This step can be omitted if one-hot encoding is not desirable. The target data is separate from the rest of the data for use in the pipeline.
 
