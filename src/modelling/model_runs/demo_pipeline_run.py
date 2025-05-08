@@ -52,23 +52,7 @@ drop_variables = ["AREACD", "AREANM"]
 # model dictionary and hyperparameter search space
 model_param_dict = {
     LinearRegression(): {},
-    Lasso(): {
-        "model__fit_intercept": [True, False],
-        "model__alpha": loguniform(1e-4, 1),
-    },
-    RandomForestRegressor(): {
-        "model__max_depth": randint(1, 100),
-        "model__max_features": [1, 0.5, "sqrt"],
-        "model__min_samples_leaf": randint(1, 20),
-        "model__min_samples_split": randint(2, 20),
-        "model__n_estimators": randint(5, 300),
-    },
-    XGBRegressor(): {
-        "model__max_depth": randint(2, 20),
-        "model__learning_rate": loguniform(1e-4, 0.1),
-        "model__subsample": uniform(0.3, 0.7),
-        "model__n_estimators": int_loguniform(5, 5000),
-    },
+
 }
 # optional controls:
 # select features list - use to subset specific features of interest, if blank it will use all features.
