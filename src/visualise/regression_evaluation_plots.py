@@ -130,7 +130,7 @@ def create_partial_dependence_plots(
         )
         axs[i].add_patch(arr)
         axs[i].annotate(
-            int(round(abs(features_sorted_differences[i]), 0)),
+            f'{float(f"{abs(features_sorted_differences[i]):.2g}"):g}',
             (2, 0.5),
             xycoords=arr,
             ha="left",
@@ -174,10 +174,11 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, d
     feature_sign_dict = {}
     feature_diff_dict = {}
     select_features_list = x_train.columns
+
     for i, feature in enumerate(select_features_list):
         y_data = (
             PartialDependenceDisplay.from_estimator(
-                model, x_train, [select_features_list[i]]
+                model, x_train, [select_features_list[i]], kind="average"
             )
             .lines_[0, 0]
             .get_ydata()
@@ -658,7 +659,7 @@ def create_shap_plots(
     return
 
 
-def create_model_evaluation_plots(
+def create_regression_evaluation_plots(
     full_pipeline: Any,
     model: Any,
     target_var: str,
@@ -710,8 +711,8 @@ def create_model_evaluation_plots(
         target_var,
         feature_sign_dict,
         col_labels,
-        output_label,
         output_path,
+        output_label,
     )
     create_actual_vs_predicted_scatter(
         y_train,
@@ -721,8 +722,8 @@ def create_model_evaluation_plots(
         id_col,
         original_df,
         target_var,
-        output_label,
         output_path,
+        output_label,
         index_mapping,
     )
     create_residuals_plot(
@@ -733,16 +734,16 @@ def create_model_evaluation_plots(
         id_col,
         original_df,
         target_var,
-        output_label,
         output_path,
+        output_label,
         index_mapping,
     )
     create_partial_dependence_plots(
         full_pipeline,
         x_train,
         target_var,
-        output_label,
         output_path,
+        output_label,
         col_labels,
         feature_diff_dict,
     )
@@ -754,8 +755,8 @@ def create_model_evaluation_plots(
         full_pipeline,
         target_var,
         shap_id_keys,
-        output_label,
         output_path,
+        output_label,
         index_mapping,
     )
     return
