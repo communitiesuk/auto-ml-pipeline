@@ -130,7 +130,7 @@ def create_partial_dependence_plots(
         )
         axs[i].add_patch(arr)
         axs[i].annotate(
-            int(round(abs(features_sorted_differences[i]), 0)),
+            f'{float(f"{abs(features_sorted_differences[i]):.2g}"):g}',
             (2, 0.5),
             xycoords=arr,
             ha="left",
@@ -174,10 +174,11 @@ def create_feature_sign_dict(model: Any, x_train: pd.DataFrame) -> Tuple[dict, d
     feature_sign_dict = {}
     feature_diff_dict = {}
     select_features_list = x_train.columns
+
     for i, feature in enumerate(select_features_list):
         y_data = (
             PartialDependenceDisplay.from_estimator(
-                model, x_train, [select_features_list[i]]
+                model, x_train, [select_features_list[i]], kind="average"
             )
             .lines_[0, 0]
             .get_ydata()
@@ -700,7 +701,6 @@ def create_regression_evaluation_plots(
     Returns:
         None
     """
-    print(output_path)
     feature_sign_dict, feature_diff_dict = create_feature_sign_dict(
         full_pipeline, x_train
     )

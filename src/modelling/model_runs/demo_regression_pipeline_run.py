@@ -101,6 +101,7 @@ for target_var in target_var_list:
         feature_df=features,
         id_col="AREANM",
         original_df=regression_data,
+        scoring_metrics=["r2", "neg_root_mean_squared_error"],
         output_path="outputs",
         output_label="demo",
         col_label_map=col_labels,

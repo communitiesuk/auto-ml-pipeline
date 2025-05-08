@@ -30,8 +30,11 @@ from sklearn.datasets import load_iris
 iris = load_iris()
 
 iris_data = pd.DataFrame(np.concatenate((iris.data, np.array([iris.target]).T), axis=1), columns=iris.feature_names + ['target'])
-iris_data = iris_data[iris_data["target"].isin([0, 1.0])]
+iris_data = iris_data[iris_data["target"].isin([1.0, 2.0])]
 
+# Assign target classes: map target values to 0 (negative class) and 1 (positive class)
+iris_data["target"] = iris_data["target"].map({1.0: 0, 2.0: 1})
+print(iris_data["target"])
 # target variables
 target_var_list = ["target"]
 # drop any unecessary variables from the model. In this case, we are dropping the geographical identifier.
@@ -58,7 +61,6 @@ for target_var in target_var_list:
     cols_to_drop = list(set([target_var] + drop_variables))
     features = preprocess_features(df=iris_data, cols_to_drop=cols_to_drop)
     target_df = preprocess_target(df=iris_data, target_col=target_var)
-
     # run model pipeline
     model_pipeline(
         model_param_dict=model_param_dict,

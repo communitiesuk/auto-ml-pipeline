@@ -1,6 +1,6 @@
-# Automatic regression pipeline
+# Automatic machine learning pipeline
 
-We have created a multi-stage modelling pipeline which can be applied to any regression machine learning problem. The following guidance explains how to run the pipeline using your own data.
+We have created a multi-stage modelling pipeline which can be applied to any regression, or binary classification machine learning problem. The following guidance explains how to run the pipeline using your own data.
 
 The pipeline is implemented using the scikit-learn library.
 
@@ -57,6 +57,17 @@ regression_data = regression_data.drop_duplicates()
 regression_data = regression_data.dropna()
 ```
 
+### Assign target variable class labels: classification only
+
+When using the pipeline with binary classification models, the target column must only contain the values 0 for the negative class, or 1 for the positive class. 
+
+You can map your target variables to this range if necessary as follows:
+
+```
+# Assign target classes: map target values to 0 (negative class) and 1 (positive class)
+iris_data["target"] = iris_data["target"].map({1.0: 0, 2.0: 1})
+```
+
 ### Specify columns to drop
 
 The next step is to remove any columns that you want to remove from your modelling pipeline. These can be identifier columns that will not help the model learning process (e.g local authority codes). Or they could be variables that will not provide helpful conclusions about your research question (e.g. using GVA in 2020 would not provide much insight when predicting the underlying drivers of GVA in 2021).
@@ -110,7 +121,7 @@ You can add new models by adding them to the model_param_dict object with the co
 
 ### Run the pipeline
 
-The following code shows an example of running the pipeline.
+The following code shows an example of running the pipeline. The code is taken from a [demonstration file](https://github.com/communitiesuk/auto-ml-pipeline/blob/main/src/modelling/model_runs/demo_regression_pipeline_run.py) which shows how the pipeline can be used for a regression task using open data. There is an equivalent demonstration file [here](https://github.com/communitiesuk/auto-ml-pipeline/blob/main/src/modelling/model_runs/demo_classification_pipeline_run.py) which shows how the pipeline can be used in a in a binary classification task.
 
 First the feature data is preprocessed by dropping the specified drop columns and target variable and performing one-hot dummy encoding. This step can be omitted if one-hot encoding is not desirable. The target data is separate from the rest of the data for use in the pipeline.
 
@@ -135,6 +146,7 @@ for target_var in target_var_list:
         feature_df=features,
         id_col="msoa11cd",
         original_df=regression_data,
+        scoring_metrics=["r2", "neg_root_mean_squared_error"],
         output_path="your/output/path",
         output_label="msoa_demo",
         col_label_map=col_labels,
@@ -207,6 +219,20 @@ pre_processing_pipeline_steps = [
     ("knn_imputer", KNNImputer()),
     ("scaler", MinMaxScaler()),
 ]
+```
+### Custom scoring metrics
+The scoring_metrics parameter can be used to specify the criteria for which the model training should by optimised and evaluated against. A list of one or more metrics can be provided and the first metric in the list will be used to optimise the hyperparameter search algorithm. Any other metrics in the list will be evaluated during model training but will not be used for optimisation. 
+
+The default scoring metrics for a regression pipeline run are:
+
+```
+scoring_metrics = ["r2", "neg_root_mean_squared_error"]
+```
+
+The default scoring metrics for a classification pipeline run are: 
+
+```
+scoring_metrics = ["f1", "accuracy"]
 ```
 
 ### Create tidy variable labels
