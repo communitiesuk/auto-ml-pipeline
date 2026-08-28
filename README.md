@@ -184,6 +184,8 @@ mlflow ui
 
 The model runs will be sorted into experiments based on the specified output_label parameter.
 
+Since MLflow 3, runs are tracked in a local SQLite database (`mlflow.db`, created in the project directory on first run) rather than the older flat-file `mlruns/` format. This file is git-ignored — delete it if you want to reset your tracking history.
+
 See the [MLflow docs](https://mlflow.org/docs/latest/index.html) for more details.
 
 ## Optional steps

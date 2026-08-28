@@ -1,4 +1,6 @@
 *mlruns/
+mlflow.db
+mlflow.db-*
 *outputs/
 *.csv
 *.xlsx

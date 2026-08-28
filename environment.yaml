@@ -156,6 +156,7 @@ dependencies:
   - zlib=1.2.13
   - zstd=1.5.5
   - pip:
+    - aiohttp==3.14.3
     - alembic==1.13.3
     - aniso8601==9.0.1
     - annotated-types==0.7.0
@@ -168,6 +169,7 @@ dependencies:
     - cloudpickle==3.0.0
     - colorlog==6.8.2
     - coverage==6.5.0
+    - cryptography==49.0.0
     - databricks-sdk==0.34.0
     - decorator==5.1.1
     - defusedxml==0.7.1
@@ -177,6 +179,7 @@ dependencies:
     - et-xmlfile==1.1.0
     - filelock==3.16.0
     - flask==3.0.3
+    - flask-cors==6.0.5
     - gitdb==4.0.11
     - gitpython==3.1.43
     - google-auth==2.35.0
@@ -184,6 +187,7 @@ dependencies:
     - graphql-core==3.2.4
     - graphql-relay==3.2.0
     - greenlet==3.1.1
+    - huey==3.3.4
     - identify==2.6.0
     - idna==3.8
     - importlib-metadata==8.4.0
@@ -194,8 +198,9 @@ dependencies:
     - llvmlite==0.43.0
     - mako==1.3.5
     - markdown==3.7
-    - mlflow==2.16.2
-    - mlflow-skinny==2.16.2
+    - mlflow==3.15.0
+    - mlflow-skinny==3.15.0
+    - mlflow-tracing==3.15.0
     - mypy==1.11.2
     - mypy-extensions==1.0.0
     - nodeenv==1.9.1
@@ -241,6 +246,7 @@ dependencies:
     - seaborn==0.13.2
     - setuptools==70.3.0
     - shap==0.46.0
+    - skops==0.14.0
     - slicer==0.0.8
     - smmap==5.0.1
     - sqlalchemy==2.0.35
